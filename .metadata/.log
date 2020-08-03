@@ -3866,3 +3866,348 @@ Java Model Exception: Java Model Status [handlerAdder(Handler) [in CTAnalysisAST
 	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
 !SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 11:14:26.632
 !MESSAGE handlerAdder(Handler) [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 11:33:59.599
+!MESSAGE Groovy compiler error
+!STACK 0
+BUG! exception in phase 'semantic analysis' in source unit 'C:\Users\AtlasKaan\Desktop\EclipseASTWorkspace\ASTAnalysis\src\Handler.groovy' commencingResolution failed: no declaration found for class Handler$Method
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:915)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:634)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.processToPhase(GroovyCompilationUnitDeclaration.java:224)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.analyseCode(GroovyCompilationUnitDeclaration.java:699)
+	at org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:1264)
+	at org.eclipse.jdt.core.dom.CompilationUnitResolver.resolve(CompilationUnitResolver.java:732)
+	at org.eclipse.jdt.core.dom.ASTParser.internalCreateAST(ASTParser.java:1205)
+	at org.eclipse.jdt.core.dom.ASTParser.createAST(ASTParser.java:820)
+	at org.eclipse.jdt.core.manipulation.CoreASTProvider$1.run(CoreASTProvider.java:271)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.jdt.core.manipulation.CoreASTProvider.createAST(CoreASTProvider.java:263)
+	at org.eclipse.jdt.core.manipulation.CoreASTProvider.getAST(CoreASTProvider.java:196)
+	at org.eclipse.jdt.core.manipulation.SharedASTProviderCore.getAST(SharedASTProviderCore.java:138)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:175)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: commencingResolution failed: no declaration found for class Handler$Method
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.commencingResolution(JDTResolver.java:224)
+	at org.codehaus.groovy.control.ResolveVisitor.visitClass(ResolveVisitor.java:1494)
+	at org.codehaus.groovy.control.ResolveVisitor.startResolving(ResolveVisitor.java:266)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.startResolving(JDTResolver.java:195)
+	at org.codehaus.groovy.control.CompilationUnit.lambda$0(CompilationUnit.java:728)
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:906)
+	... 15 more
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-03 11:40:00.044
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.ui.texteditor.AbstractTextEditor$TextEditorSavable.isDirty(AbstractTextEditor.java:7212)
+	at org.eclipse.ui.internal.Workbench.getFilteredSaveables(Workbench.java:3481)
+	at org.eclipse.ui.internal.Workbench.saveAll(Workbench.java:3454)
+	at org.eclipse.ui.ide.IDE$1.run(IDE.java:1494)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.ui.ide.IDE.saveAllEditors(IDE.java:1482)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.doSave(SaveScopeResourcesHandler.java:228)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.handleStatus(SaveScopeResourcesHandler.java:182)
+	at org.eclipse.debug.internal.ui.sourcelookup.Prompter.lambda$0(Prompter.java:73)
+	at org.eclipse.ui.internal.PendingSyncExec.run(PendingSyncExec.java:68)
+	at org.eclipse.ui.internal.UILockListener.doPendingWork(UILockListener.java:171)
+	at org.eclipse.ui.internal.UISynchronizer.lambda$0(UISynchronizer.java:139)
+	at org.eclipse.swt.widgets.RunnableLock.run(RunnableLock.java:40)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Synchronizer.java:185)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Display.java:4005)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:3633)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine$5.run(PartRenderingEngine.java:1158)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine.run(PartRenderingEngine.java:1047)
+	at org.eclipse.e4.ui.internal.workbench.E4Workbench.createAndRunUI(E4Workbench.java:155)
+	at org.eclipse.ui.internal.Workbench.lambda$3(Workbench.java:658)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Workbench.java:557)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(PlatformUI.java:154)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(IDEApplication.java:150)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:203)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:137)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:107)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:401)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:255)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:657)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:594)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1447)
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-03 11:40:00.619
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-03 11:41:55.713
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-03 11:44:30.019
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.ui.texteditor.AbstractTextEditor$TextEditorSavable.isDirty(AbstractTextEditor.java:7212)
+	at org.eclipse.ui.internal.Workbench.getFilteredSaveables(Workbench.java:3481)
+	at org.eclipse.ui.internal.Workbench.saveAll(Workbench.java:3454)
+	at org.eclipse.ui.ide.IDE$1.run(IDE.java:1494)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.ui.ide.IDE.saveAllEditors(IDE.java:1482)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.doSave(SaveScopeResourcesHandler.java:228)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.handleStatus(SaveScopeResourcesHandler.java:182)
+	at org.eclipse.debug.internal.ui.sourcelookup.Prompter.lambda$0(Prompter.java:73)
+	at org.eclipse.ui.internal.PendingSyncExec.run(PendingSyncExec.java:68)
+	at org.eclipse.ui.internal.UILockListener.doPendingWork(UILockListener.java:171)
+	at org.eclipse.ui.internal.UISynchronizer.lambda$0(UISynchronizer.java:139)
+	at org.eclipse.swt.widgets.RunnableLock.run(RunnableLock.java:40)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Synchronizer.java:185)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Display.java:4005)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:3633)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine$5.run(PartRenderingEngine.java:1158)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine.run(PartRenderingEngine.java:1047)
+	at org.eclipse.e4.ui.internal.workbench.E4Workbench.createAndRunUI(E4Workbench.java:155)
+	at org.eclipse.ui.internal.Workbench.lambda$3(Workbench.java:658)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Workbench.java:557)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(PlatformUI.java:154)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(IDEApplication.java:150)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:203)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:137)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:107)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:401)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:255)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:657)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:594)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1447)
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-03 11:47:12.974
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-03 11:47:41.449
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-03 12:13:03.876
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:21:38.889
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:21:40.460
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:31:13.952
+!MESSAGE Groovy-Eclipse Type Inferencing: Error finding method visitMethodCallExpression in class CTAnalysisAST$MethodVisitor
+!STACK 1
+Java Model Exception: Java Model Status [visitMethodCallExpression(MethodCallExpression) [in MethodVisitor [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]]] does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:575)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:618)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:325)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:311)
+	at org.eclipse.jdt.internal.core.Member.getFlags(Member.java:172)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.findMethodNode(TypeInferencingVisitorWithRequestor.java:2137)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:456)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:378)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 12:31:13.952
+!MESSAGE visitMethodCallExpression(MethodCallExpression) [in MethodVisitor [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]]] does not exist
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:31:13.960
+!MESSAGE Groovy-Eclipse Type Inferencing: Error finding method getSourceUnit in class CTAnalysisAST$MethodVisitor
+!STACK 1
+Java Model Exception: Java Model Status [getSourceUnit() [in MethodVisitor [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]]] does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:575)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:618)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:325)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:311)
+	at org.eclipse.jdt.internal.core.Member.getFlags(Member.java:172)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.findMethodNode(TypeInferencingVisitorWithRequestor.java:2137)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:456)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:378)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 12:31:13.961
+!MESSAGE getSourceUnit() [in MethodVisitor [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]]] does not exist
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:31:13.967
+!MESSAGE Groovy-Eclipse Type Inferencing: Error finding method summary in class CTAnalysisAST
+!STACK 1
+Java Model Exception: Java Model Status [summary() [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:575)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:618)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:325)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:311)
+	at org.eclipse.jdt.internal.core.Member.getFlags(Member.java:172)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.findMethodNode(TypeInferencingVisitorWithRequestor.java:2137)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:456)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 12:31:13.967
+!MESSAGE summary() [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:31:13.973
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting children of CTAnalysisAST$Device
+!STACK 1
+Java Model Exception: Java Model Status [Device [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:575)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:618)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:325)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:311)
+	at org.eclipse.jdt.internal.core.SourceType.isEnum(SourceType.java:684)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.membersOf(TypeInferencingVisitorWithRequestor.java:3201)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:316)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:378)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 12:31:13.973
+!MESSAGE Device [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 12:31:13.980
+!MESSAGE Groovy-Eclipse Type Inferencing: Error finding method handlerAdder in class CTAnalysisAST
+!STACK 1
+Java Model Exception: Java Model Status [handlerAdder(Handler) [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist]
+	at org.eclipse.jdt.internal.core.JavaElement.newNotPresentException(JavaElement.java:575)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:618)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:325)
+	at org.eclipse.jdt.internal.core.JavaElement.getElementInfo(JavaElement.java:311)
+	at org.eclipse.jdt.internal.core.Member.getFlags(Member.java:172)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.findMethodNode(TypeInferencingVisitorWithRequestor.java:2137)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:456)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+!SUBENTRY 1 org.eclipse.jdt.core 4 969 2020-08-03 12:31:13.980
+!MESSAGE handlerAdder(Handler) [in CTAnalysisAST [in [Working copy] CTAnalysisAST.groovy [in <default> [in src [in ASTAnalysis]]]]] does not exist
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-03 12:40:04.983
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.ui.texteditor.AbstractTextEditor$TextEditorSavable.isDirty(AbstractTextEditor.java:7212)
+	at org.eclipse.ui.internal.Workbench.getFilteredSaveables(Workbench.java:3481)
+	at org.eclipse.ui.internal.Workbench.saveAll(Workbench.java:3454)
+	at org.eclipse.ui.ide.IDE$1.run(IDE.java:1494)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.ui.ide.IDE.saveAllEditors(IDE.java:1482)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.doSave(SaveScopeResourcesHandler.java:228)
+	at org.eclipse.debug.internal.ui.launchConfigurations.SaveScopeResourcesHandler.handleStatus(SaveScopeResourcesHandler.java:182)
+	at org.eclipse.debug.internal.ui.sourcelookup.Prompter.lambda$0(Prompter.java:73)
+	at org.eclipse.ui.internal.PendingSyncExec.run(PendingSyncExec.java:68)
+	at org.eclipse.ui.internal.UILockListener.doPendingWork(UILockListener.java:171)
+	at org.eclipse.ui.internal.UISynchronizer.lambda$0(UISynchronizer.java:139)
+	at org.eclipse.swt.widgets.RunnableLock.run(RunnableLock.java:40)
+	at org.eclipse.swt.widgets.Synchronizer.runAsyncMessages(Synchronizer.java:185)
+	at org.eclipse.swt.widgets.Display.runAsyncMessages(Display.java:4005)
+	at org.eclipse.swt.widgets.Display.readAndDispatch(Display.java:3633)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine$5.run(PartRenderingEngine.java:1158)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.e4.ui.internal.workbench.swt.PartRenderingEngine.run(PartRenderingEngine.java:1047)
+	at org.eclipse.e4.ui.internal.workbench.E4Workbench.createAndRunUI(E4Workbench.java:155)
+	at org.eclipse.ui.internal.Workbench.lambda$3(Workbench.java:658)
+	at org.eclipse.core.databinding.observable.Realm.runWithDefault(Realm.java:338)
+	at org.eclipse.ui.internal.Workbench.createAndRunWorkbench(Workbench.java:557)
+	at org.eclipse.ui.PlatformUI.createAndRunWorkbench(PlatformUI.java:154)
+	at org.eclipse.ui.internal.ide.application.IDEApplication.start(IDEApplication.java:150)
+	at org.eclipse.equinox.internal.app.EclipseAppHandle.run(EclipseAppHandle.java:203)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.runApplication(EclipseAppLauncher.java:137)
+	at org.eclipse.core.runtime.internal.adaptor.EclipseAppLauncher.start(EclipseAppLauncher.java:107)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:401)
+	at org.eclipse.core.runtime.adaptor.EclipseStarter.run(EclipseStarter.java:255)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(Unknown Source)
+	at java.lang.reflect.Method.invoke(Unknown Source)
+	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:657)
+	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:594)
+	at org.eclipse.equinox.launcher.Main.run(Main.java:1447)
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 13:35:32.658
+!MESSAGE Groovy compiler error
+!STACK 0
+BUG! exception in phase 'semantic analysis' in source unit 'C:\Users\AtlasKaan\Desktop\EclipseASTWorkspace\ASTAnalysis\src\CTAnalysisAST.groovy' commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:915)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:634)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.processToPhase(GroovyCompilationUnitDeclaration.java:224)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.analyseCode(GroovyCompilationUnitDeclaration.java:699)
+	at org.eclipse.jdt.internal.compiler.Compiler.resolve(Compiler.java:1092)
+	at org.eclipse.jdt.internal.core.CompilationUnitProblemFinder.process(CompilationUnitProblemFinder.java:280)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.buildStructure(GroovyCompilationUnit.java:337)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:268)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:598)
+	at org.eclipse.jdt.internal.core.CompilationUnit.makeConsistent(CompilationUnit.java:1149)
+	at org.codehaus.jdt.groovy.model.GroovyReconcileWorkingCopyOperation.makeConsistent(GroovyReconcileWorkingCopyOperation.java:62)
+	at org.eclipse.jdt.internal.core.ReconcileWorkingCopyOperation.executeOperation(ReconcileWorkingCopyOperation.java:94)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.run(JavaModelOperation.java:736)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.runOperation(JavaModelOperation.java:802)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.reconcile(GroovyCompilationUnit.java:427)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:131)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.access$0(JavaReconcilingStrategy.java:113)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy$1.run(JavaReconcilingStrategy.java:93)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:90)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:157)
+	at org.eclipse.jdt.internal.ui.text.CompositeReconcilingStrategy.reconcile(CompositeReconcilingStrategy.java:94)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:107)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.commencingResolution(JDTResolver.java:224)
+	at org.codehaus.groovy.control.ResolveVisitor.visitClass(ResolveVisitor.java:1494)
+	at org.codehaus.groovy.control.ResolveVisitor.startResolving(ResolveVisitor.java:266)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.startResolving(JDTResolver.java:195)
+	at org.codehaus.groovy.control.CompilationUnit.lambda$0(CompilationUnit.java:728)
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:906)
+	... 24 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 13:35:33.751
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method CTAnalysisAST in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException

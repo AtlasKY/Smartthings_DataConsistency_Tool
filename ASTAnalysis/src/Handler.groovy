@@ -17,6 +17,7 @@ class Handler{
 	List readStates
 	List writeStates
 	List calledMethods
+	List deviceAccesses
 	List eventProps //what info of the event is used, if used
 	
 	
@@ -31,6 +32,7 @@ class Handler{
 		
 		args = new ArrayList<String>()
 		
+		deviceAccesses = new ArrayList()
 		calledMethods = new ArrayList<Method>()
 		eventProps = new ArrayList()
 		readStates = new ArrayList()
@@ -98,14 +100,24 @@ class Handler{
 			writeStates.add(s)
 	}
 	
-	void addMethodCall(MethodCallExpression mexp) {
-		addMethodCall(mexp, mexp.getReceiver().getText())
+	void addDevAcc(String s) {
+		if(!deviceAccesses.contains(s))
+			deviceAccesses.add(s)
 	}
 	
-	void addMethodCall(MethodCallExpression mexp, String receiver) {
+	void addMethodCall(MethodCallExpression mexp, String path) {
+		addMethodCall(mexp, mexp.getReceiver().getText(), path)
+	}
+	
+	void addMethodCall(MethodCallExpression mexp, String receiver,  String path) {
 		String mName = mexp.getReceiver().getText() + "." + mexp.getMethodAsString()
 		Method m = new Method(receiver, mexp.getMethodAsString())
-	
+		m.setCallPath(path)
+		
+		if(path.contains("c:")) {
+			m.setCond()
+		}
+		
 		//.each{} call handling for method registration
 		if(mexp.getText().contains("each")) {
 	//		println "For each loop Meth Expression:\n" + mexp
@@ -122,8 +134,6 @@ class Handler{
 				//				println "Method arguments: " + m.arguments
 								if(xp instanceof MethodCallExpression) {
 									m.addArg(xp)
-								//	println "Expression: " + xp.getMethodAsString() + "\nmName: " + mName
-				//					println "MCE"
 									addMethodCall(xp, receiver)
 								}
 							}
@@ -192,7 +202,9 @@ class Handler{
 		
 		String receiver
 		String method
+		String callPath
 		List arguments
+		boolean isCond
 		
 		public Method(String r) {
 			this.Method(r, "")
@@ -202,6 +214,11 @@ class Handler{
 			receiver = r
 			arguments = new ArrayList()
 			method = m
+			isCond = false
+		}
+		
+		void setPath(String pth) {
+			callPath = pth
 		}
 		
 		void addMethod(String m) {
@@ -218,10 +235,14 @@ class Handler{
 			}
 		}
 		
+		void setCond() {
+			isCond = true
+		}
+		
 		@Override
 		boolean equals(Object o) {
 			if(o instanceof Method) {
-				return (this.receiver.equals(o.receiver) && this.method.equals(o.method))
+				return (this.receiver.equals(o.receiver) && this.method.equals(o.method) && (this.isCond == o.isCond))
 			}
 			else
 				false
@@ -237,6 +258,9 @@ class Handler{
 				}
 			}
 			st = st + ")"
+			if(isCond) {
+				st += "[cond-ex]"
+			}
 			return st
 		}
 		

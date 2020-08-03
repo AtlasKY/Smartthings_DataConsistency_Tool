@@ -1,0 +1,520 @@
+
+
+import org.codehaus.groovy.ast.ClassCodeVisitorSupport
+import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.MethodNode
+import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.BooleanExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.ConstructorCallExpression
+import org.codehaus.groovy.ast.expr.DeclarationExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.MapExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.NamedArgumentListExpression
+import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.expr.TupleExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.BreakStatement
+import org.codehaus.groovy.ast.stmt.EmptyStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
+import org.codehaus.groovy.ast.stmt.ForStatement
+import org.codehaus.groovy.ast.stmt.IfStatement
+import org.codehaus.groovy.ast.stmt.ReturnStatement
+import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.stmt.WhileStatement
+import org.codehaus.groovy.ast.Parameter
+import org.codehaus.groovy.classgen.GeneratorContext
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.SourceUnit
+import org.codehaus.groovy.control.customizers.CompilationCustomizer
+import org.codehaus.groovy.tools.shell.util.Logger
+import org.codehaus.groovy.transform.GroovyASTTransformation
+import org.codehause.groovyx.gpars.*
+
+
+@GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
+class CTAnalysisAST extends CompilationCustomizer{	
+	
+	List handlers //a list of handlers called from events
+	List devices //a list of device variables set by the inputs
+	List allDecMeths //a list of declared methods in the application
+	MethodVisitor mv //a method visitor object
+	Logger log //a Logger class obect to log the analysis on an external file
+	
+	//Class Constructor
+	public CTAnalysisAST(){
+		
+		super(CompilePhase.SEMANTIC_ANALYSIS)//initialise the super CompilationCustomizer class
+		
+		//initialise the data structs
+		handlers = new ArrayList<Handler>() //keep as arraylist for now for simplicity
+		devices = new ArrayList();
+		allDecMeths = new ArrayList();
+			 
+	}
+	
+	@Override
+	void call(SourceUnit source, GeneratorContext context, ClassNode classNode) {
+		
+		//get all declared methods from the classNode
+		allDecMeths = classNode.getAllDeclaredMethods()
+		
+		//create a new method visitor object
+		mv = new MethodVisitor()
+		classNode.visitContents(mv) //visit the contents of the classNode AST using the method visitor mv
+		
+		//call the helper method to get the remaining elements from the application code
+		getStateVariables(classNode)
+		
+		//print out a summary of the data structures
+		summary()
+	}
+	
+	//a methodCall visitor helper
+	void visitMethodCall(MethodCallExpression mce) {
+		mv.visitMethodCallExpression(mce)
+	}
+
+	//Caller method for getting handler arguments, state accesses, and event informations usage
+	//from the handler code
+	void getStateVariables(ClassNode cn) {
+		
+		//cycle through all the handlers
+		handlers.each { hdl->
+		//	println "Handler Name: " + hdl.name
+			
+			//for each get the method node of the handler method from the classnode
+			MethodNode methN = cn.getDeclaredMethods(hdl.name).get(0)
+			 
+			//get the arguments to the handler and store them in the handler structure
+			methN.getParameters().each { prm->
+				hdl.addArg(prm.getName())
+			}
+			
+			//recursively analyze the method node
+			handlerMNodeHelper(methN, hdl, cn)
+			
+			//for each method called from the handler code, 
+			//anaylze the called method if it is declared and defined in the code
+			hdl.calledMethods.each { mt->
+				//println mt.method
+				if(cn.getDeclaredMethods(mt.method).size()>0) {
+					methN = cn.getDeclaredMethods(mt.method).get(0)
+					handlerMNodeHelper(methN, hdl, cn)
+				}
+			}
+		
+		}
+	}
+	
+	//Helper method to call recursive action for getting state and event information 
+	void handlerMNodeHelper(MethodNode mn, Handler hdl, ClassNode cn) {
+		
+		//methodnode exists
+		if(mn!=null) {
+			//println mn.getName()
+	//		if(mn.getName().contains("takeAction"))
+		//		println mn.getName()
+			
+			//get the code of the method node as a block statement
+			BlockStatement block = (BlockStatement) mn.getCode()
+		
+			//cycle through the statements in the block and analyze each using the recursive method
+			block.getStatements().each { st ->					
+				stateRecurse(st, hdl, cn)
+			}
+		}
+	}
+	
+	//A recursive analysis method for getting state and event usage information and
+	//storing it in the handler object passed as parameter
+	void stateRecurse(Statement st, Handler hdl, ClassNode cn) {
+		
+		//if block statement cycle over the statements and call this method on each
+		if(st instanceof BlockStatement) {
+			st.getStatements().each { bst->
+				stateRecurse(bst, hdl, cn)
+			}
+		} //if it is an if statement call this method on the boolean expression, if block, and else block
+		else if(st instanceof IfStatement) {
+			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
+			stateRecurse(est, hdl, cn)
+			stateRecurse(st.getIfBlock(), hdl, cn)
+			stateRecurse(st.getElseBlock(), hdl, cn)
+		}
+		//if it is either an expression statement or return expression statement 
+		//cast it as expression and analyze
+		else if(st instanceof ExpressionStatement || st instanceof ReturnStatement) {
+			Expression exp = st.getExpression()
+			
+			//Check for usage of event information as the event is passed as a parameter,
+			//get parameters and check if the expression contains the parameter
+			hdl.args.each { arg->
+				if(hdl.args.size()>0 && exp.getText().contains(arg)) {
+					hdl.addEvtProp(exp.getText())
+				//	println "contain evt "+ exp.getText()
+				}
+			}
+			
+			//if exp is a methodcall expression, add the method call to handler
+			//check for scheduled execution using pre-defined method names
+			//check for notification sending using predefined method names
+			//if the method is declared within the code, get the method node 
+			//and call the recursive method node helper method to analyze
+			if(exp instanceof MethodCallExpression) {
+				//get the name of the method
+				def mname = exp.getMethodAsString()
+				//add the method to the list of called mehods from the handler
+				hdl.addMethodCall(exp)
+				
+				//check for scheduling that uses predefined methodcalls
+				if(exp.getText().toLowerCase().contains("runin")) {
+					//get the argument that contains the name of the method scheduled for execution
+					def schMeth = exp.getArguments().getAt(1).getText()
+
+					//find the declared method within the code and get the method node
+					def mn = cn.getDeclaredMethods(schMeth).get(0)
+					//call the analysis tool on the method node
+					handlerMNodeHelper(mn, hdl, cn)
+				}
+				
+				//check for ntoification/sms sending functions, set the flag for message usage on the handler
+				if(exp.getText().contains("sendSms") || exp.getText().contains("sendPush")
+					|| exp.getText().contains("sendNotificationToContacts")) {
+					hdl.setMsg(true)
+				}
+				
+				//if the method declaration is in the code, call the handler helper on the method node
+				if(cn.getDeclaredMethods(mname).size()>0)
+					handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
+			}
+			//if the expression is a binary assignment expression
+			else if(exp instanceof BinaryExpression) {
+				//if the left side contains state, then it is an assignment to the state variable
+				//add it as a write to state
+				if(exp.getLeftExpression().text.contains("state")) {
+//					println "Write State: " + exp.text
+					hdl.addWriteState(exp.getLeftExpression().getText())
+				}
+				//if state is on the right, then it is a read on state
+				if(exp.getRightExpression().text.contains("state")) {
+//					println "Read State: " exp.text
+					hdl.addReadState(exp.getRightExpression().getText())
+				}
+				
+				//if the right hand is a method call, 
+				//get the method node and call the helper if it is a declared method
+				if(exp.getRightExpression() instanceof MethodCallExpression) {
+					MethodCallExpression mce = exp.getRightExpression()
+					def mname = mce.getMethodAsString()
+					hdl.addMethodCall(mce)
+					if(cn.getDeclaredMethods(mname).size()>0) {
+						
+						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
+					}
+					//-------------------------------------------------------------------------------------------------WIP-----------
+					//Dealing with findAll and each methodcalls
+					//Goes into inside of them to check for device related calls
+					else if(mce.getArguments().getAt(0) instanceof ClosureExpression) {
+						def recver = mce.getReceiver().getText()
+						def isDev = false
+						devices.each { dv->
+							if(dv.devName.contains(recver)) {
+								isDev = true
+							}
+						}
+						
+						def parName = ""
+						
+						println "Receuiver:" 
+						println "Closure: MCE " + mce
+						ClosureExpression ce = mce.getArguments().getAt(0)
+						if(isDev) {
+							parName = ce.getParameters()[0].getName()
+							println "Parameter Name: " + parName
+						}
+						println "Closure : " + ce
+						BlockStatement bst = (BlockStatement) ce.getCode()
+						bst.getStatements().each { bs->
+							println "Recurse the Block in Closure"
+							stateRecurse(bs, hdl, cn)
+						}
+						
+					}
+					
+				}
+			}
+			else if(exp instanceof BooleanExpression) {
+				Expression xp = exp.getExpression()
+				if(xp instanceof MethodCallExpression) {
+					def mname = xp.getMethodAsString()
+					hdl.addMethodCall(xp)
+	//				println "Method Target: " + mname
+					if(cn.getDeclaredMethods(mname).size()>0)
+						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
+				}
+			}
+			else if(exp instanceof PropertyExpression) {
+				hdl.addReadState(exp.getText())
+			}
+		}
+		
+	}
+		
+	class MethodVisitor extends ClassCodeVisitorSupport{
+		
+		
+		public MethodVisitor( ) {
+		}
+		
+		/*
+		@Override
+		void visitPropertyExpression(PropertyExpression ve) {
+			
+			if(ve.getText().contains("state."))
+				println ve.getText()
+		}
+		*/
+		/*
+		@Override
+		void visitBinaryExpression(BinaryExpression bex) {
+			if(bex!=null) {
+			if(bex.getLeftExpression().text.contains("state")) {
+				println "Write State: " + bex.text
+			}
+			
+			if(bex.getRightExpression().text.contains("state")) {
+				println "Read State: " bex.text
+			}
+			}
+		}
+		*/
+		
+		/*
+		@Override
+		void visitConstructorCallExpression(ConstructorCallExpression cce) {
+			
+		}
+		*/
+		
+		@Override
+		void visitIfElse(IfStatement ifs) {
+		//	println "In Ifelse visitor: " + ifs.toString()
+			if(ifs.getIfBlock() instanceof ExpressionStatement) {
+				Expression exp = ifs.getIfBlock().getExpression()
+				if(exp instanceof MethodCallExpression) {
+			//		println "Methodcall exp: " + exp.getMethodAsString()
+					visitMethodCallExpression(exp)
+				}
+			}else {
+				BlockStatement bs = (BlockStatement) ifs.getIfBlock()
+				bs.getStatements().each { st->
+					if(st instanceof ExpressionStatement) {
+						Expression exp = st.getExpression()
+						if(exp instanceof MethodCallExpression) {
+							visitMethodCallExpression(exp)
+						}
+					}
+				}
+			}
+			if(!ifs.getElseBlock() instanceof EmptyStatement) {
+				if(ifs.getIfBlock() instanceof ExpressionStatement) {
+					Expression exp = ifs.getIfBlock().getExpression()
+					if(exp instanceof MethodCallExpression) {
+						visitMethodCallExpression(exp)
+					}
+				}else {
+					bs = (BlockStatement) ifs.getElseBlock()
+					bs.getStatements().each { st->
+						if(st instanceof ExpressionStatement) {
+							Expression exp = st.getExpression()
+							if(exp instanceof MethodCallExpression) {
+								visitMethodCallExpression(exp)
+							}
+						}
+					}
+				}
+			}
+		}
+		
+		
+		//Visitor for MEthod Call Expressions
+		//
+		@Override
+		public void visitMethodCallExpression(MethodCallExpression mce) {
+						
+			def mceText
+			
+			//Store the name of the method called as a string
+			if(mce.getMethodAsString() == null)
+			{
+				mceText = mce.getText()
+			}else
+				mceText = mce.getMethodAsString()
+				
+//			println(mceText)
+			
+			//INPUT METHOD HANDLER
+			if(mceText.equals("input")) {
+
+				//if the method has more than zero arguments
+				if(mce.getArguments().toList().size() > 0) {
+					
+					//get the list of arguments
+					def args = mce.getArguments()
+					
+					def dname //device name assoc. w/ the handler
+					List dcap = new ArrayList() //device capabilities requested
+					def isDevice = false //if the input is a device input or a value/mode input
+					
+					//for each argument for the input method call
+					args.each { arg->
+						
+						//if argument is a constant expression
+						//if it doesn't contain capabilty request and not a map expression, is the name of the input/device variable
+						//if it contains capabilty request, then input is a device, store the requested cap in the cap list
+						//if input is a device, then create a new device object and add to devices list
+						if(arg instanceof ConstantExpression) {
+							if(!arg.getText().contains("capability.")) {
+								//print "Device Name: "
+								dname = arg.getValue()
+							}else {
+//								print "Device Cap: " 
+								isDevice = true
+								dcap.add(arg.getValue())
+							}							
+						} 
+					}
+					if(isDevice)
+						devices.add(new Device(dname, dcap))	
+				}
+			}
+			
+			//SUBSCRIPTION HANDLER
+			if(mceText.equals("subscribe")) {
+				
+				List arglist = mce.getArguments().toList()
+				
+			//	println "Handler Subs: " + mce.getText()
+				
+				def hname
+				def dname
+				def ename
+				
+				if(arglist.get(0) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(0)
+					dname = varex.getName()
+					//println "Dev Name: "
+				
+					}
+				
+				if(arglist.get(1) instanceof ConstantExpression){
+					
+					ConstantExpression conex = (ConstantExpression) arglist.get(1)
+					
+					ename = conex.getValue()
+				
+					}
+				
+				if(arglist.get(2) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(2)
+					
+					hname = varex.getName()
+				} else if(arglist.get(2) instanceof ConstantExpression) {
+					ConstantExpression conex = (ConstantExpression) arglist.get(2)
+					
+					hname = conex.getValue()
+				
+				}
+				
+		//		println "Handler: " + hname + " " + dname + " " + ename
+				
+				handlerAdder(new Handler(hname, dname, dname + "." + ename))
+				
+				/*
+				if(allDecMeths.contains(hname)) {
+					println "Handler Method Node: " + allDecMeths.get(allDecMeths.indexOf(hname))
+				}
+				*/
+				
+			}
+			
+			if(mceText.equals("schedule")) {
+//				println "Schedule: " + mce.getArguments()
+				List arglist = mce.getArguments().toList()
+				
+				def hname = ((ConstantExpression) arglist.get(1)).getValue()
+				def dname = "Scheduler"
+				def ename = "Schedule on " + ((VariableExpression)arglist.get(0)).getName()
+				
+				handlers.add(new Handler(hname, dname, ename))
+				
+			}
+			
+			//recurse on the method expression to get the inner methods	
+			super.visitMethodCallExpression(mce)
+		}
+		
+		@Override
+		protected SourceUnit getSourceUnit() {
+			return null;
+		}
+	}
+	
+	//Printer Method
+	public void summary() {
+		
+		println "-------------------------------------------------------"
+		
+		println "Devices:"
+		devices.each{ dev->
+			println(dev)
+		}
+		
+		println "-------------------------------------------------------"
+		
+		println "Handlers: "
+		handlers.forEach { hand ->
+			println(hand)
+		}
+		println "-------------------------------------------------------"
+		
+	}
+	
+	class Device{
+		
+		//Device Name
+		String devName
+		//Capabilty List
+		List cap
+		
+		public Device(String n, List c) {
+			devName = n
+			cap = new ArrayList()
+			cap = c
+		}
+		
+		@Override
+		public String toString() {
+			return "Device Name: " + devName + " Capability Req: " + cap + ""
+		}
+	}
+	
+	public void handlerAdder(Handler hdl) {
+		
+		if(handlers.contains(hdl)) {
+			handlers.get(handlers.indexOf(hdl)).addEvent(hdl.eventTriggers.get(0))
+		}else {
+			handlers.add(hdl)
+		}
+		
+	}
+	
+}

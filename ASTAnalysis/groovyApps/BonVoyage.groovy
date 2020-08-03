@@ -80,6 +80,7 @@ def presence(evt)
 	else {
 		log.debug "present; doing nothing"
 	}
+	log.info "evt.name: $evt.value"
 }
 
 def takeAction()

@@ -84,6 +84,16 @@ class CTAnalysisAST extends CompilationCustomizer{
 	//from the handler code
 	void getStateVariables(ClassNode cn) {
 		
+		
+		//PATHLOG LEGEND:
+		//c: conditional block
+		//b: boolean expression
+		//bl: binary leftside exp
+		//br: binary rightside exp
+		//s: scheduled execution
+		//p: + parameter name
+		def pathLog = ""
+		
 		//cycle through all the handlers
 		handlers.each { hdl->
 		//	println "Handler Name: " + hdl.name
@@ -97,7 +107,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 			}
 			
 			//recursively analyze the method node
-			handlerMNodeHelper(methN, hdl, cn)
+			handlerMNodeHelper(methN, hdl, cn, pathLog)
 			
 			//for each method called from the handler code, 
 			//anaylze the called method if it is declared and defined in the code
@@ -105,7 +115,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//println mt.method
 				if(cn.getDeclaredMethods(mt.method).size()>0) {
 					methN = cn.getDeclaredMethods(mt.method).get(0)
-					handlerMNodeHelper(methN, hdl, cn)
+					handlerMNodeHelper(methN, hdl, cn, mt.callPath)
 				}
 			}
 		
@@ -113,7 +123,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 	}
 	
 	//Helper method to call recursive action for getting state and event information 
-	void handlerMNodeHelper(MethodNode mn, Handler hdl, ClassNode cn) {
+	void handlerMNodeHelper(MethodNode mn, Handler hdl, ClassNode cn, String pathLog) {
 		
 		//methodnode exists
 		if(mn!=null) {
@@ -126,26 +136,26 @@ class CTAnalysisAST extends CompilationCustomizer{
 		
 			//cycle through the statements in the block and analyze each using the recursive method
 			block.getStatements().each { st ->					
-				stateRecurse(st, hdl, cn)
+				stateRecurse(st, hdl, cn, pathLog)
 			}
 		}
 	}
 	
 	//A recursive analysis method for getting state and event usage information and
 	//storing it in the handler object passed as parameter
-	void stateRecurse(Statement st, Handler hdl, ClassNode cn) {
+	void stateRecurse(Statement st, Handler hdl, ClassNode cn, String pth) {
 		
 		//if block statement cycle over the statements and call this method on each
 		if(st instanceof BlockStatement) {
 			st.getStatements().each { bst->
-				stateRecurse(bst, hdl, cn)
+				stateRecurse(bst, hdl, cn, pth)
 			}
 		} //if it is an if statement call this method on the boolean expression, if block, and else block
 		else if(st instanceof IfStatement) {
 			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
-			stateRecurse(est, hdl, cn)
-			stateRecurse(st.getIfBlock(), hdl, cn)
-			stateRecurse(st.getElseBlock(), hdl, cn)
+			stateRecurse(est, hdl, cn, pth)
+			stateRecurse(st.getIfBlock(), hdl, cn, pth  + "c:")
+			stateRecurse(st.getElseBlock(), hdl, cn, pth  + "c:")
 		}
 		//if it is either an expression statement or return expression statement 
 		//cast it as expression and analyze
@@ -169,93 +179,117 @@ class CTAnalysisAST extends CompilationCustomizer{
 			if(exp instanceof MethodCallExpression) {
 				//get the name of the method
 				def mname = exp.getMethodAsString()
-				//add the method to the list of called mehods from the handler
-				hdl.addMethodCall(exp)
+				//add the method to the list of called methods from the handler
+				hdl.addMethodCall(exp, pth)
 				
 				//check for scheduling that uses predefined methodcalls
-				if(exp.getText().toLowerCase().contains("runin")) {
+				if(exp.getText().toLowerCase().contains("runin") || exp.getText().toLowerCase().contains("schedule") 
+					|| exp.getText().toLowerCase().contains("runonce") || exp.getText().toLowerCase().contains("runevery")) {
 					//get the argument that contains the name of the method scheduled for execution
-					def schMeth = exp.getArguments().getAt(1).getText()
-
+					def schMeth
+					if(!exp.getText().toLowerCase().contains("runevery")) {
+						schMeth = exp.getArguments().getAt(1).getText()
+					} else {
+						schMeth = exp.getArguments().getAt(0).getText()
+					}
+					
 					//find the declared method within the code and get the method node
 					def mn = cn.getDeclaredMethods(schMeth).get(0)
 					//call the analysis tool on the method node
-					handlerMNodeHelper(mn, hdl, cn)
+					handlerMNodeHelper(mn, hdl, cn, pth + "s:")
 				}
 				
+				//check for ntoification/sms sending functions, set the flag for message usage on the handler
 				if(exp.getText().contains("sendSms") || exp.getText().contains("sendPush")
 					|| exp.getText().contains("sendNotificationToContacts")) {
 					hdl.setMsg(true)
 				}
 				
-				if(cn.getDeclaredMethods(mname).size()>0)
-					handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
-			} 
-			else if(exp instanceof BinaryExpression) {
-				if(exp.getLeftExpression().text.contains("state")) {
-//					println "Write State: " + exp.text
-					hdl.addWriteState(exp.getLeftExpression().getText())
+				//if the method declaration is in the code, call the handler helper on the method node
+				if(cn.getDeclaredMethods(mname).size()>0) {
+					handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn, pth)
 				}
-				
-				if(exp.getRightExpression().text.contains("state")) {
-//					println "Read State: " exp.text
-					hdl.addReadState(exp.getRightExpression().getText())
-				}
-				
-				if(exp.getRightExpression() instanceof MethodCallExpression) {
-					MethodCallExpression mce = exp.getRightExpression()
-					def mname = mce.getMethodAsString()
-					hdl.addMethodCall(mce)
-					if(cn.getDeclaredMethods(mname).size()>0) {
-						
-						println mce
-						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
+				//-------------------------------------------------------------------------------------------------WIP-----------
+				//find a way to log device accesses
+				//Dealing with findAll and each methodcalls
+				//Goes into inside of them to check for device related calls
+				else if(exp.getArguments().getAt(0) instanceof ClosureExpression) {
+					//get the receiver of the call to foreach
+					def recver = exp.getReceiver().getText()
+					def isDev = false //a flag for whether the receiver is a device or not
+					
+					//cycle through the devices to see if it contains the receiver,
+					//if it contains then set isDev to true
+					devices.each { dv->
+						if(dv.devName.contains(recver)) {
+							isDev = true
+						}
 					}
-					//-------------------------------------------------------------------------------------------------WIP-----------
-					//Dealing with findAll and each methodcalls
-					//Goes into inside of them to check for device related calls
-					else if(mce.getArguments().getAt(0) instanceof ClosureExpression) {
-						def recver = mce.getReceiver().getText()
-						def isDev = false
-						devices.each { dv->
-							if(dv.devName.contains(recver)) {
-								isDev = true
-							}
-						}
-						
-						def parName = ""
-						
-						println "Receuiver:" 
-						println "Closure: MCE " + mce
-						ClosureExpression ce = mce.getArguments().getAt(0)
-						if(isDev) {
-							parName = ce.getParameters()[0].getName()
-							println "Parameter Name: " + parName
-						}
-						println "Closure : " + ce
-						BlockStatement bst = (BlockStatement) ce.getCode()
+					
+					def parName = ""
+					println "Closure: MCE " + exp
+					ClosureExpression ce = exp.getArguments().getAt(0)
+					
+					println "Closure : " + ce
+					BlockStatement bst = (BlockStatement) ce.getCode()
+					//if it is a device that is being accessed, get the stand-in variable for the device
+					//pass the name of the parameter into the path log string
+					if(isDev) {
+						parName = ce.getParameters()[0].getName()
+						println "Parameter Name: " + parName
 						bst.getStatements().each { bs->
 							println "Recurse the Block in Closure"
-							stateRecurse(bs, hdl, cn)
+							stateRecurse(bs, hdl, cn, pth + "p:" + parName + ":d:" + recver + ":")
 						}
-						
+					}
+					else {
+						bst.getStatements().each { bs->
+							println "Recurse the Block in Closure"
+							stateRecurse(bs, hdl, cn, pth)
+						}
 					}
 					
 				}
 			}
+			//if the expression is a binary expression
+			else if(exp instanceof BinaryExpression) {
+				
+				Expression lex = exp.getLeftExpression()
+				Expression rex = exp.getRightExpression()
+				
+				//if the left side contains state, then it is an assignment to the state variable
+				//add it as a write to state
+				if(lex.text.contains("state.") && !pth.contains("br:")) {
+					hdl.addWriteState(exp.getLeftExpression().getText())
+				}
+				//if state is on the right, then it is a read on state
+				if(rex.text.contains("state.")) {
+					hdl.addReadState(exp.getRightExpression().getText())
+				}
+				
+				//recurse analyze right epxression	
+				ExpressionStatement est = new ExpressionStatement(rex)
+				stateRecurse(est, hdl, cn, pth + "br:")
+				
+				//recurse analyze left expression
+				est = new ExpressionStatement(lex)
+				stateRecurse(est, hdl, cn, pth + "bl:")
+			}
+			//if boolean expression, 
 			else if(exp instanceof BooleanExpression) {
 				Expression xp = exp.getExpression()
 				if(xp instanceof MethodCallExpression) {
 					def mname = xp.getMethodAsString()
-					hdl.addMethodCall(xp)
+					hdl.addMethodCall(xp, pth)
 	//				println "Method Target: " + mname
 					if(cn.getDeclaredMethods(mname).size()>0)
-						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn)
+						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn, pth + "b:")
 				}
+				stateRecurse(new ExpressionStatement(xp), hdl, cn, pth + "b:")
 			}
-			else if(exp instanceof PropertyExpression) {
+			/*else if(exp instanceof PropertyExpression) {
 				hdl.addReadState(exp.getText())
-			}
+			}*/
 		}
 		
 	}
