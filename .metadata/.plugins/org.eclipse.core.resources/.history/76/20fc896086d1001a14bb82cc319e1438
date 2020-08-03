@@ -1,0 +1,356 @@
+
+
+import org.codehaus.groovy.ast.ClassCodeVisitorSupport
+import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.MethodNode
+import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.DeclarationExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.MapExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.NamedArgumentListExpression
+import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.expr.TupleExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.BreakStatement
+import org.codehaus.groovy.ast.stmt.EmptyStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
+import org.codehaus.groovy.ast.stmt.ForStatement
+import org.codehaus.groovy.ast.stmt.IfStatement
+import org.codehaus.groovy.ast.stmt.ReturnStatement
+import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.stmt.WhileStatement
+import org.codehaus.groovy.ast.Parameter
+import org.codehaus.groovy.classgen.GeneratorContext
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.SourceUnit
+import org.codehaus.groovy.control.customizers.CompilationCustomizer
+import org.codehaus.groovy.tools.shell.util.Logger
+import org.codehaus.groovy.transform.GroovyASTTransformation
+import org.codehause.groovyx.gpars.*
+
+
+@GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
+class CTAnalysisAST extends CompilationCustomizer{
+	
+	Map allCmds
+	Map allProps
+	
+	List allCommandsList
+	List allPropsList
+	List allCapsList	
+	
+	List handlers
+	List devices
+	
+	Logger log
+	
+	public CTAnalysisAST(){
+		
+		super(CompilePhase.SEMANTIC_ANALYSIS)
+		
+		allCmds = new HashMap()
+		allProps = new HashMap()
+		
+		allCommandsList = new ArrayList()
+		allPropsList = new ArrayList()
+		allCapsList = new ArrayList()
+		
+		handlers = new ArrayList<Handler>() //keep as arraylist for now for simplicity
+		devices = new ArrayList();
+			 
+	}
+	
+	@Override
+	void call(SourceUnit source, GeneratorContext context, ClassNode classNode) {
+		
+		def allMethodNodes = classNode.getAllDeclaredMethods().toArray()
+		def methodsMap = classNode.getDeclaredMethodsMap()
+		methodsMap.each { mth ->
+			
+			println "Key: " + mth.getKey()
+			println "Value: " + mth.getValue()
+			
+		}
+		
+		MethodVisitor mv = new MethodVisitor()
+		classNode.visitContents(mv)
+		
+		getStateVariables(classNode)
+		
+		summary()
+	}
+	
+	void getStateVariables(ClassNode cn) {
+		
+		println "-----------------------------------------------------"
+		
+		handlers.each { hdl->
+			println hdl.name
+			MethodNode methN = cn.getDeclaredMethods(hdl.name).get(0)
+			 
+			stateMNodeHelper(methN, hdl, cn)
+			 
+		}
+	}
+	
+	void stateMNodeHelper(MethodNode mn, Handler hdl, ClassNode cn) {
+				
+		if(mn!=null) {
+			println mn.getName()
+			
+			BlockStatement block = (BlockStatement) mn.getCode()
+		
+			block.getStatements().each { st ->
+			
+				stateRecurse(st, hdl, cn)
+			
+			}
+		}
+	}
+	
+	void stateRecurse(Statement st, Handler hdl, ClassNode cn) {
+		
+		if(st instanceof BlockStatement) {
+			st.getStatements().each { bst->
+				stateRecurse(bst, hdl, cn)
+			}
+		}else if(st instanceof ExpressionStatement) {
+			Expression exp = st.getExpression()
+			if(exp instanceof MethodCallExpression) {
+				def mname = exp.getMethodAsString()
+				hdl.addMethodCall((exp.getReceiver())?.getName() + "." + mname)
+				println "Method Target: " + mname
+				stateMNodeHelper(cn.getDeclaredMethods(mname)?.get(0), hdl, cn)
+			}
+		}
+	}
+		
+	class MethodVisitor extends ClassCodeVisitorSupport{
+		
+		public MethodVisitor() {
+			println("MethodVisitor Constructor")
+		}
+		
+		/*
+		@Override
+		void visitPropertyExpression(PropertyExpression ve) {
+			
+			if(ve.getText().contains("state."))
+				println ve.getText()
+		}
+		*/
+		/*
+		@Override
+		void visitBinaryExpression(BinaryExpression bex) {
+			if(bex!=null) {
+			if(bex.getLeftExpression().text.contains("state")) {
+				println "Write State: " + bex.text
+			}
+			
+			if(bex.getRightExpression().text.contains("state")) {
+				println "Read State: " bex.text
+			}
+			}
+		}
+		*/
+		@Override
+		void visitDeclarationExpression(DeclarationExpression de) {
+			
+			println "Declaration Expression: " + de.getText()
+		}
+		
+		@Override
+		void visitMethodCallExpression(MethodCallExpression mce) {
+						
+			def mceText
+			
+			if(mce.getMethodAsString() == null)
+			{
+				mceText = mce.getText()
+			}else
+				mceText = mce.getMethodAsString()
+				
+			println(mceText)
+			
+			//INPUT METHOD HANDLER
+			if(mceText.equals("input")) {
+				println("----input----")
+				if(mce.getArguments().toList().size() > 0) {
+					
+					def args = mce.getArguments()
+					
+					def dname
+					List dcap = new ArrayList()
+					def isDevice = false
+					
+					args.each { arg->
+						
+						if(arg instanceof ConstantExpression) {
+							if(!arg.getText().contains("capability.")) {
+								print "Device Name: "
+								dname = arg.getValue()
+							}else {
+								print "Device Cap: " 
+								isDevice = true
+								dcap.add(arg.getValue())
+							}
+							println arg.getValue()
+							
+						} else if(arg instanceof VariableExpression) {
+							println arg.getName() + "variable exp"
+						} else if(arg instanceof MapExpression) {
+							println arg.getText() + " map exp"
+						}
+					}
+					if(isDevice)
+						devices.add(new Device(dname, dcap))	
+				}
+				println("----end-input----")
+			}
+			
+			//SUBSCRIPTION HANDLER
+			if(mceText.equals("subscribe")) {
+				
+				List arglist = mce.getArguments().toList()
+				
+				def hname
+				def dname
+				def ename
+				
+				if(arglist.get(0) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(0)
+					dname = varex.getName()
+				
+					}
+				
+				if(arglist.get(1) instanceof ConstantExpression){
+					
+					ConstantExpression conex = (ConstantExpression) arglist.get(1)
+					
+					ename = conex.getValue()
+				
+					}
+				
+				if(arglist.get(2) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(2)
+					
+					hname = varex.getName()
+				}
+				
+				handlers.add(new Handler(hname, dname, ename))
+			}	
+			
+			//recurse on the method expression to get the inner methods	
+			super.visitMethodCallExpression(mce)
+		}
+		
+		@Override
+		protected SourceUnit getSourceUnit() {
+			return null;
+		}
+	}
+	
+	
+	//Printer Method
+	public void summary() {
+		
+		println "-------------------------------------------------------"
+		
+		println "Devices:"
+		devices.each{ dev->
+			println(dev)
+		}
+		
+		println "-------------------------------------------------------"
+		
+		println "Handlers: "
+		handlers.forEach { hand ->
+			println(hand)
+		}
+		println "-------------------------------------------------------"
+		
+	}
+	
+	class Device{
+		String devName
+		List cap
+		
+		public Device(String n, List c) {
+			devName = n
+			cap = new ArrayList()
+			cap = c
+		}
+		
+		@Override
+		public String toString() {
+			return "Device Name: " + devName + " Capability Req: " + cap + ""
+		}
+	}
+	
+	class Handler {
+		
+		String name
+		String devName
+		String eventName
+		List readStates
+		List writeStates
+		List calledMethods
+		
+		public Handler(String n, String dn, String en) {
+			name = n
+			devName = dn
+			eventName = en
+			
+			calledMethods = new ArrayList()
+			
+			readStates = new ArrayList()
+			writeStates = new ArrayList()
+		}
+		
+		void addReadState(String s) {
+			readStates.add(s)
+		}
+		
+		void addWriteState(String s) {
+			writeStates.add(s)
+		}
+		
+		void addMethodCall(String meth) {
+			calledMethods.add(meth)
+		}
+		
+		@Override
+		public String toString() {
+			def state = ""
+			def methods = ""
+			if(calledMethods.size()>0) {
+				methods = "\nCalled Methods: "
+				calledMethods.each { m->
+					methods = methods + m + "; "
+				}
+			}
+			if(readStates.size()>0) {
+				state = "\nRead States: "
+				readStates.each { st->
+					state = state + st + "; "
+				}
+			}
+			if(writeStates.size()>0) {
+				state = state + "\nWrite States: "
+				writeStates.each { st->
+					state = state + st + "; "
+				}
+			}
+			return "Handler Name: " + name + " Device Name: " + devName + " Event Trigger: " + eventName + methods + state + "\n"
+		}
+	}
+	
+	
+}

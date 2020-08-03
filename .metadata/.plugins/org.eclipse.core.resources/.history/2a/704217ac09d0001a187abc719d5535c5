@@ -1,0 +1,201 @@
+
+
+import org.codehaus.groovy.ast.ClassCodeVisitorSupport
+import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.MethodNode
+import org.codehaus.groovy.ast.*
+import org.codehaus.groovy.ast.expr.BinaryExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.ConstantExpression
+import org.codehaus.groovy.ast.expr.DeclarationExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.MapExpression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.expr.NamedArgumentListExpression
+import org.codehaus.groovy.ast.expr.PropertyExpression
+import org.codehaus.groovy.ast.expr.TupleExpression
+import org.codehaus.groovy.ast.expr.VariableExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.BreakStatement
+import org.codehaus.groovy.ast.stmt.EmptyStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
+import org.codehaus.groovy.ast.stmt.ForStatement
+import org.codehaus.groovy.ast.stmt.IfStatement
+import org.codehaus.groovy.ast.stmt.ReturnStatement
+import org.codehaus.groovy.ast.stmt.Statement
+import org.codehaus.groovy.ast.stmt.WhileStatement
+import org.codehaus.groovy.ast.Parameter
+import org.codehaus.groovy.classgen.GeneratorContext
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.SourceUnit
+import org.codehaus.groovy.control.customizers.CompilationCustomizer
+import org.codehaus.groovy.tools.shell.util.Logger
+import org.codehaus.groovy.transform.GroovyASTTransformation
+import org.codehause.groovyx.gpars.*
+
+
+@GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
+class CTAnalysisAST extends CompilationCustomizer{
+	
+	
+	Map allCmds
+	Map allProps
+	
+	List allCommandsList
+	List allPropsList
+	List allCapsList	
+	
+	List handlers
+	List devices
+	
+	Logger log
+	
+	public CTAnalysisAST(){
+		
+		super(CompilePhase.SEMANTIC_ANALYSIS)
+		
+		allCmds = new HashMap()
+		allProps = new HashMap()
+		
+		allCommandsList = new ArrayList()
+		allPropsList = new ArrayList()
+		allCapsList = new ArrayList()
+		
+		handlers = new ArrayList<Handler>() //keep as arraylist for now for simplicity
+		devices = new ArrayList();
+			 
+	}
+	
+	@Override
+	void call(SourceUnit source, GeneratorContext context, ClassNode classNode) {
+		
+		def allMethodNodes = classNode.getAllDeclaredMethods()
+		allMethodNodes.each { it -> println(it.getName().toLowerCase()) }
+		
+		MethodVisitor mv = new MethodVisitor()
+		classNode.visitContents(mv)
+		
+		
+	}
+		
+	class MethodVisitor extends ClassCodeVisitorSupport{
+		
+		public MethodVisitor() {
+			println("MethodVisitor Constructor")
+		}
+		
+		
+		
+		
+		@Override
+		void visitConstantExpression(ConstantExpression ce) {
+						
+			if(ce.getValue() == "input") {
+				println("hello")
+				println(ce.getValue())
+			}
+			
+		}
+		
+		@Override
+		void visitMethodCallExpression(MethodCallExpression mce) {
+			
+			println("in method call exp")
+			
+			def methText
+			
+			if(mce.getMethodAsString() == null)
+				{
+					//dynamic methods
+					methText = mce.getText()
+				}
+				else
+				{
+					methText = mce.getMethodAsString()
+				}
+			
+			println(methText)
+			
+			if(methText.equals("input")) {
+				println("input")
+			}
+			
+			if(mce.getMethodAsString() == "preferences") {
+			
+				println(mce.getArguments().toList().get(0).getCode())
+				
+					
+			}
+			
+			if(mce.getMethodAsString() == "subscribe") {
+				
+				List arglist = mce.getArguments().toList()
+				
+				def hname
+				def dname
+				def ename
+				
+				if(arglist.get(0) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(0)
+					dname = varex.getName()
+				
+					}
+				
+				if(arglist.get(1) instanceof ConstantExpression){
+					
+					ConstantExpression conex = (ConstantExpression) arglist.get(1)
+					
+					ename = conex.getValue()
+				
+					}
+				
+				if(arglist.get(2) instanceof VariableExpression){
+					
+					VariableExpression varex = (VariableExpression) arglist.get(2)
+					
+					hname = varex.getName()
+				}
+				
+				handlers.add(new Handler(hname, dname, ename))
+				
+				println(handlers)
+			}		
+		}
+		
+		@Override
+		protected SourceUnit getSourceUnit() {
+			return null;
+		}
+	}
+	
+	class Device{
+		String devName
+		String cap
+		
+		public Device(String n, String c) {
+			devName = n
+			cap = c
+		}
+	}
+	
+	class Handler {
+		
+		String name
+		String devName
+		String eventName
+		
+		public Handler(String n, String dn, String en) {
+			name = n
+			devName = dn
+			eventName = en
+		}
+		
+		@Override
+		public String toString() {
+			return "Handler Name: " + name + " Device Name: " + devName + " Event Trigger: " + eventName
+		}
+	}
+	
+	
+}
