@@ -182,6 +182,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//add the method to the list of called methods from the handler
 				hdl.addMethodCall(exp, pth)
 				
+				if(exp.getText().contains("timeofday") || exp.getText().contains("now")) {
+					println "Time: " + exp.getText()
+					hdl.addTimAcc(exp.getText())
+				}
+				
 				//check for scheduling that uses predefined methodcalls
 				if(exp.getText().toLowerCase().contains("runin") || exp.getText().toLowerCase().contains("schedule") 
 					|| exp.getText().toLowerCase().contains("runonce") || exp.getText().toLowerCase().contains("runevery")) {
@@ -217,6 +222,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					//get the receiver of the call to foreach
 					def recver = exp.getReceiver().getText()
 					def isDev = false //a flag for whether the receiver is a device or not
+					println "Path: " + pth
 					
 					//cycle through the devices to see if it contains the receiver,
 					//if it contains then set isDev to true
@@ -235,17 +241,21 @@ class CTAnalysisAST extends CompilationCustomizer{
 					//if it is a device that is being accessed, get the stand-in variable for the device
 					//pass the name of the parameter into the path log string
 					if(isDev) {
-						parName = ce.getParameters()[0].getName()
-						println "Parameter Name: " + parName
+						//if uses parameter -> {...} format	
+						println "Path: " + pth
+						
 						bst.getStatements().each { bs->
 							println "Recurse the Block in Closure"
-							stateRecurse(bs, hdl, cn, pth + "p:" + parName + ":d:" + recver + ":")
+							println "Path: " + pth
+							stateRecurse(bs, hdl, cn, pth + "d:" + recver + ":")
 						}
+						
 					}
 					else {
 						bst.getStatements().each { bs->
 							println "Recurse the Block in Closure"
 							stateRecurse(bs, hdl, cn, pth)
+							
 						}
 					}
 					
@@ -286,6 +296,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn, pth + "b:")
 				}
 				stateRecurse(new ExpressionStatement(xp), hdl, cn, pth + "b:")
+			}
+			else if(exp instanceof ConstructorCallExpression) {
+				if(exp.getText().contains("Date")) {
+					println "Date: " + exp
+					hdl.addTimAcc(exp.getText())
+				}
 			}
 			/*else if(exp instanceof PropertyExpression) {
 				hdl.addReadState(exp.getText())

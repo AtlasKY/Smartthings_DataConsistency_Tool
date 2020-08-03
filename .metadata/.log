@@ -4211,3 +4211,22 @@ Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: comme
 !MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method CTAnalysisAST in class CTAnalysisAST
 !STACK 0
 java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-03 14:16:04.437
+!MESSAGE Invalid package binding for default import: java.io
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-03 14:16:04.445
+!MESSAGE Invalid package binding for default import: java.net
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-03 14:16:04.452
+!MESSAGE Invalid package binding for default import: java.util
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 14:22:31.059
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 14:22:31.759
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException

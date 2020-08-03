@@ -19,6 +19,7 @@ class Handler{
 	List calledMethods
 	List deviceAccesses
 	List eventProps //what info of the event is used, if used
+	List timeAcc
 	
 	
 	public Handler(String n, String dn, String en) {
@@ -31,6 +32,8 @@ class Handler{
 		eventTriggers.add(en)
 		
 		args = new ArrayList<String>()
+		
+		timeAcc = new ArrayList()
 		
 		deviceAccesses = new ArrayList()
 		calledMethods = new ArrayList<Method>()
@@ -111,7 +114,22 @@ class Handler{
 	
 	void addMethodCall(MethodCallExpression mexp, String receiver,  String path) {
 		String mName = mexp.getReceiver().getText() + "." + mexp.getMethodAsString()
-		Method m = new Method(receiver, mexp.getMethodAsString())
+		
+		def rec = receiver
+		
+		if(path.contains("d:")) {
+			def devin = path.indexOf("d:")+2
+			def devname = ""
+			while(path.getAt(devin)!= ":") {
+				devname += path.getAt(devin)
+				devin++
+			}
+			println "Devname: " + devname + " Receiver: " + receiver
+			rec = devname
+			//println "Parameter Check: " + parname + " Dev Check: " + devname + "\nPath: " + path
+		}
+		Method m = new Method(rec, mexp.getMethodAsString())
+		
 		m.setCallPath(path)
 		
 		if(path.contains("c:")) {
@@ -134,7 +152,7 @@ class Handler{
 				//				println "Method arguments: " + m.arguments
 								if(xp instanceof MethodCallExpression) {
 									m.addArg(xp)
-									addMethodCall(xp, receiver)
+									addMethodCall(xp, rec, path)
 								}
 							}
 						}
@@ -148,6 +166,10 @@ class Handler{
 		if(!calledMethods.contains(m)) {
 			calledMethods.add(m)
 		}
+	}
+	
+	void addTimAcc(String s) {
+		timeAcc.add(s)
 	}
 	
 	@Override
@@ -195,7 +217,8 @@ class Handler{
 			}
 		}
 		
-		return nm + "\nDevice Name: " + devName + triggers + evprops + methods + state + "\nSend Notification/Msg: " + hasMsg + "\n"
+		return nm + "\nDevice Name: " + devName + triggers + evprops + methods + state + 
+		"\nSend Notification/Msg: " + hasMsg + "\n" + timeAcc + "\n"
 	}
 	
 	class Method{
