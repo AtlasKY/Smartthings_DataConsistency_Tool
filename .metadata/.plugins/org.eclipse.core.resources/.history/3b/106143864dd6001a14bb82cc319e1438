@@ -358,6 +358,36 @@ class CTAnalysisAST extends CompilationCustomizer{
 		public MethodVisitor( ) {
 		}
 		
+		/*
+		@Override
+		void visitPropertyExpression(PropertyExpression ve) {
+			
+			if(ve.getText().contains("state."))
+				println ve.getText()
+		}
+		*/
+		/*
+		@Override
+		void visitBinaryExpression(BinaryExpression bex) {
+			if(bex!=null) {
+			if(bex.getLeftExpression().text.contains("state")) {
+				println "Write State: " + bex.text
+			}
+			
+			if(bex.getRightExpression().text.contains("state")) {
+				println "Read State: " bex.text
+			}
+			}
+		}
+		*/
+		
+		/*
+		@Override
+		void visitConstructorCallExpression(ConstructorCallExpression cce) {
+			
+		}
+		*/
+		
 		@Override
 		void visitIfElse(IfStatement ifs) {
 		//	println "In Ifelse visitor: " + ifs.toString()
