@@ -23,7 +23,7 @@ class CTAnalysisDriver {
 		
 		File dir = new File(code_dir).eachFile { file ->			
 			//Single file check
-			if(file.getName().contains("")) {
+			if(file.getName().contains("Shades")) {
 				try {
 					CompilerConfiguration cc = new CompilerConfiguration(CompilerConfiguration.DEFAULT)
 					

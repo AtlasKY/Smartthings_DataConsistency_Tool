@@ -17,6 +17,7 @@ class Handler{
 	List readStates
 	List writeStates
 	List calledMethods
+	List devMethods
 	List deviceAccesses
 	List eventProps //what info of the event is used, if used
 	List timeAcc
@@ -37,6 +38,7 @@ class Handler{
 		
 		deviceAccesses = new ArrayList()
 		calledMethods = new ArrayList<Method>()
+		devMethods = new ArrayList<Method>()
 		eventProps = new ArrayList()
 		readStates = new ArrayList()
 		writeStates = new ArrayList()
@@ -95,6 +97,7 @@ class Handler{
 	}
 	
 	void addReadState(String s) {
+		if(!readStates.contains(s))
 			readStates.add(s)
 	}
 	
@@ -108,11 +111,30 @@ class Handler{
 			deviceAccesses.add(s)
 	}
 	
-	void addMethodCall(MethodCallExpression mexp, String path) {
-		addMethodCall(mexp, mexp.getReceiver().getText(), path)
+	boolean devMethHelper(String rec, List devices) {
+	//	println "Receiver " + rec
+		
+		def ret = false
+		
+		if(rec.contains("log") || rec.contains("this"))
+			return false
+				
+	//	println devices
+			
+		devices.each { d->
+			if(d.devName.contains(rec)) {
+	//			println devName + " " + rec
+				ret = true
+			}
+		}
+		return ret
 	}
 	
-	void addMethodCall(MethodCallExpression mexp, String receiver,  String path) {
+	void addMethodCall(MethodCallExpression mexp, String path, boolean sta, boolean dev) {
+		addMethodCall(mexp, mexp.getReceiver().getText(), path, sta, dev)
+	}
+	
+	void addMethodCall(MethodCallExpression mexp, String receiver,  String path, boolean sta, boolean dev) {
 		String mName = mexp.getReceiver().getText() + "." + mexp.getMethodAsString()
 		
 		def rec = receiver
@@ -124,7 +146,7 @@ class Handler{
 				devname += path.getAt(devin)
 				devin++
 			}
-			println "Devname: " + devname + " Receiver: " + receiver
+		//	println "Devname: " + devname + " Receiver: " + receiver
 			rec = devname
 			//println "Parameter Check: " + parname + " Dev Check: " + devname + "\nPath: " + path
 		}
@@ -132,7 +154,12 @@ class Handler{
 		
 		m.setCallPath(path)
 		
+		if(sta) {
+			m.setState()
+		}
+		
 		if(path.contains("c:")) {
+		//	println "\nHandler: " + name
 			m.setCond()
 		}
 		
@@ -166,18 +193,33 @@ class Handler{
 		if(!calledMethods.contains(m)) {
 			calledMethods.add(m)
 		}
+		if(dev) {
+			devMethods.add(m)
+		}
+		
 	}
 	
 	void addTimAcc(String s) {
 		timeAcc.add(s)
 	}
 	
+	int getMeth(String m) {
+		def i = 0
+		while(!calledMethods.get(i).getM().contains(m)) {
+			i++
+		}
+		return i
+	}
+	
 	@Override
 	public String toString() {
 		def state = ""
 		def methods = ""
+		def devMeth = ""
 		def triggers = ""
 		def evprops = ""
+		def tAcc = ""
+		def msg = ""
 		def nm = "Handler Name: " + name
 		nm = nm + "("
 		if(args.size()>0) {
@@ -195,7 +237,14 @@ class Handler{
 		if(calledMethods.size()>0) {
 			methods = "\nCalled Methods: "
 			calledMethods.each { m->
-				methods = methods + m + "; "
+				if(!m.method.contains("log"))
+					methods = methods + m + "; "
+			}
+		}
+		if(devMethods.size()>0) {
+			devMeth = "\nDevice Methods: \n"
+			devMethods.each { m->
+				devMeth += "	" + m.extString() + "\n"
 			}
 		}
 		if(readStates.size()>0) {
@@ -216,9 +265,18 @@ class Handler{
 				triggers = triggers + tr + "; "
 			}
 		}
+		if(timeAcc.size()>0) {
+			tAcc = "\nTime Access: "
+			timeAcc.each { ta->
+				tAcc += ta + ";"
+			}
+		}
+		if(hasMsg) {
+			msg = "\nSend Notification/Msg"
+		}
 		
 		return nm + "\nDevice Name: " + devName + triggers + evprops + methods + state + 
-		"\nSend Notification/Msg: " + hasMsg + "\n" + timeAcc + "\n"
+		 msg + tAcc + devMeth + "\n"
 	}
 	
 	class Method{
@@ -228,6 +286,8 @@ class Handler{
 		String callPath
 		List arguments
 		boolean isCond
+		boolean useState
+		String condPar
 		
 		public Method(String r) {
 			this.Method(r, "")
@@ -238,6 +298,16 @@ class Handler{
 			arguments = new ArrayList()
 			method = m
 			isCond = false
+			useState = false
+			condPar = ""
+		}
+		
+		void setState() {
+			useState = true
+		}
+		
+		String getM() {
+			return method
 		}
 		
 		void setPath(String pth) {
@@ -259,7 +329,41 @@ class Handler{
 		}
 		
 		void setCond() {
+		//	println "Method: " + method
 			isCond = true
+			def ind = 3
+			String p = ""
+			while(ind <= callPath.length()) {
+				p = callPath.substring(ind-3, ind)
+				if(p.contains("t-")) {
+					condPar += "time-info:"
+					ind+=2
+				}
+				else if(p.contains("s-")) {
+					condPar += "state-info:"
+					ind+=2
+				}
+				else if(p.contains("e-")) {
+					condPar += "evt-info:"
+					ind+=2
+				}
+				else if(p.contains("i-")) {
+					condPar += "no-else:"
+					ind+=2
+				}
+				else if(p.contains("ic:")) {
+					condPar += "if:"
+					ind+=3
+				}
+				else if(p.contains("ec:")) {
+					condPar += "else:"
+					ind+=3
+				}
+				else
+					ind++
+				
+			}
+		//	println "Path p: " + callPath + "\nCond Parameters: " + condPar
 		}
 		
 		@Override
@@ -267,8 +371,19 @@ class Handler{
 			if(o instanceof Method) {
 				return (this.receiver.equals(o.receiver) && this.method.equals(o.method) && (this.isCond == o.isCond))
 			}
+			else if(o instanceof String) {
+				return this.method.contains(o)
+			}
 			else
 				false
+		}
+		
+		String extString() {
+			def str = this.toString() + "\n"
+			if(isCond)
+				str += "		Conditionals: " + condPar
+				
+			return str
 		}
 		
 		@Override

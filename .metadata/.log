@@ -4230,3 +4230,235 @@ java.lang.NullPointerException
 !MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
 !STACK 0
 java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 15:18:41.560
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 15:20:56.487
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-03 15:21:59.508
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-04 11:44:32.685
+!MESSAGE Invalid package binding for default import: java.io
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-04 11:44:32.696
+!MESSAGE Invalid package binding for default import: java.net
+
+!ENTRY org.eclipse.jdt.core 2 0 2020-08-04 11:44:32.705
+!MESSAGE Invalid package binding for default import: java.util
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 11:44:54.394
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 11:44:55.829
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 11:44:56.804
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 11:44:57.403
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method main in class CTAnalysisDriver
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 12:02:57.353
+!MESSAGE Groovy compiler error
+!STACK 0
+BUG! exception in phase 'semantic analysis' in source unit 'C:\Users\AtlasKaan\Desktop\EclipseASTWorkspace\ASTAnalysis\src\CTAnalysisAST.groovy' commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:915)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:634)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.processToPhase(GroovyCompilationUnitDeclaration.java:224)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.analyseCode(GroovyCompilationUnitDeclaration.java:699)
+	at org.eclipse.jdt.internal.compiler.Compiler.resolve(Compiler.java:1092)
+	at org.eclipse.jdt.internal.core.CompilationUnitProblemFinder.process(CompilationUnitProblemFinder.java:280)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.buildStructure(GroovyCompilationUnit.java:337)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:268)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:598)
+	at org.eclipse.jdt.internal.core.CompilationUnit.makeConsistent(CompilationUnit.java:1149)
+	at org.codehaus.jdt.groovy.model.GroovyReconcileWorkingCopyOperation.makeConsistent(GroovyReconcileWorkingCopyOperation.java:62)
+	at org.eclipse.jdt.internal.core.ReconcileWorkingCopyOperation.executeOperation(ReconcileWorkingCopyOperation.java:94)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.run(JavaModelOperation.java:736)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.runOperation(JavaModelOperation.java:802)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.reconcile(GroovyCompilationUnit.java:427)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:131)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.access$0(JavaReconcilingStrategy.java:113)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy$1.run(JavaReconcilingStrategy.java:93)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:90)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:157)
+	at org.eclipse.jdt.internal.ui.text.CompositeReconcilingStrategy.reconcile(CompositeReconcilingStrategy.java:94)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:107)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.commencingResolution(JDTResolver.java:224)
+	at org.codehaus.groovy.control.ResolveVisitor.visitClass(ResolveVisitor.java:1494)
+	at org.codehaus.groovy.control.ResolveVisitor.startResolving(ResolveVisitor.java:266)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.startResolving(JDTResolver.java:195)
+	at org.codehaus.groovy.control.CompilationUnit.lambda$0(CompilationUnit.java:728)
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:906)
+	... 24 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 12:19:35.539
+!MESSAGE Groovy compiler error
+!STACK 0
+BUG! exception in phase 'semantic analysis' in source unit 'C:\Users\AtlasKaan\Desktop\EclipseASTWorkspace\ASTAnalysis\src\CTAnalysisAST.groovy' commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:915)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:634)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.processToPhase(GroovyCompilationUnitDeclaration.java:224)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.analyseCode(GroovyCompilationUnitDeclaration.java:699)
+	at org.eclipse.jdt.internal.compiler.Compiler.resolve(Compiler.java:1092)
+	at org.eclipse.jdt.internal.core.CompilationUnitProblemFinder.process(CompilationUnitProblemFinder.java:280)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.buildStructure(GroovyCompilationUnit.java:337)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:268)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:598)
+	at org.eclipse.jdt.internal.core.CompilationUnit.makeConsistent(CompilationUnit.java:1149)
+	at org.codehaus.jdt.groovy.model.GroovyReconcileWorkingCopyOperation.makeConsistent(GroovyReconcileWorkingCopyOperation.java:62)
+	at org.eclipse.jdt.internal.core.ReconcileWorkingCopyOperation.executeOperation(ReconcileWorkingCopyOperation.java:94)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.run(JavaModelOperation.java:736)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.runOperation(JavaModelOperation.java:802)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.reconcile(GroovyCompilationUnit.java:427)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:131)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.access$0(JavaReconcilingStrategy.java:113)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy$1.run(JavaReconcilingStrategy.java:93)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:90)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:157)
+	at org.eclipse.jdt.internal.ui.text.CompositeReconcilingStrategy.reconcile(CompositeReconcilingStrategy.java:94)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:107)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.commencingResolution(JDTResolver.java:224)
+	at org.codehaus.groovy.control.ResolveVisitor.visitClass(ResolveVisitor.java:1494)
+	at org.codehaus.groovy.control.ResolveVisitor.startResolving(ResolveVisitor.java:266)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.startResolving(JDTResolver.java:195)
+	at org.codehaus.groovy.control.CompilationUnit.lambda$0(CompilationUnit.java:728)
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:906)
+	... 24 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 12:29:22.604
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method addArg in class Method
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.debug 2 0 2020-08-04 12:47:47.661
+!MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-04 12:54:10.511
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 13:02:03.241
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method addMethodCall in class Handler
+!STACK 0
+java.util.ConcurrentModificationException
+	at java.util.ArrayList$ArrayListSpliterator.tryAdvance(Unknown Source)
+	at java.util.stream.ReferencePipeline.forEachWithCancel(Unknown Source)
+	at java.util.stream.AbstractPipeline.copyIntoWithCancel(Unknown Source)
+	at java.util.stream.AbstractPipeline.copyInto(Unknown Source)
+	at java.util.stream.AbstractPipeline.wrapAndCopyInto(Unknown Source)
+	at java.util.stream.MatchOps$MatchOp.evaluateSequential(Unknown Source)
+	at java.util.stream.MatchOps$MatchOp.evaluateSequential(Unknown Source)
+	at java.util.stream.AbstractPipeline.evaluate(Unknown Source)
+	at java.util.stream.ReferencePipeline.anyMatch(Unknown Source)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findMethodDeclaration0(SimpleTypeLookup.java:775)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findMethodDeclaration(SimpleTypeLookup.java:697)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findDeclaration(SimpleTypeLookup.java:613)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findDeclarationForDynamicVariable(SimpleTypeLookup.java:569)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findTypeForVariable(SimpleTypeLookup.java:501)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.findType(SimpleTypeLookup.java:181)
+	at org.eclipse.jdt.groovy.search.SimpleTypeLookup.lookupType(SimpleTypeLookup.java:91)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.lookupExpressionType(TypeInferencingVisitorWithRequestor.java:2669)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1963)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1968)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstantExpression(TypeInferencingVisitorWithRequestor.java:981)
+	at org.codehaus.groovy.ast.expr.ConstantExpression.visit(ConstantExpression.java:86)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitMethodCallExpression(TypeInferencingVisitorWithRequestor.java:1444)
+	at org.codehaus.groovy.ast.expr.MethodCallExpression.visit(MethodCallExpression.java:77)
+	at org.codehaus.groovy.ast.CodeVisitorSupport.visitExpressionStatement(CodeVisitorSupport.java:117)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitExpressionStatement(ClassCodeVisitorSupport.java:252)
+	at org.codehaus.groovy.ast.stmt.ExpressionStatement.visit(ExpressionStatement.java:40)
+	at org.codehaus.groovy.ast.CodeVisitorSupport.visitBlockStatement(CodeVisitorSupport.java:86)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitBlockStatement(ClassCodeVisitorSupport.java:216)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitBlockStatement(TypeInferencingVisitorWithRequestor.java:847)
+	at org.codehaus.groovy.ast.stmt.BlockStatement.visit(BlockStatement.java:69)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitClassCodeContainer(ClassCodeVisitorSupport.java:165)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorOrMethod(TypeInferencingVisitorWithRequestor.java:1088)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitMethodInternal(TypeInferencingVisitorWithRequestor.java:658)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:466)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.internalFindOccurences(GroovyOccurrencesFinder.java:138)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.getOccurrences(GroovyOccurrencesFinder.java:86)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.findOccurrences(GroovyOccurrencesFinder.java:194)
+	at org.codehaus.groovy.eclipse.editor.GroovyEditor.updateOccurrenceAnnotations(GroovyEditor.java:1314)
+	at org.eclipse.jdt.internal.ui.javaeditor.JavaEditor$6.selectionChanged(JavaEditor.java:3383)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:184)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 13:05:18.759
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 13:41:35.189
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method Handler in class Handler
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-04 13:49:26.537
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.ui.workbench.texteditor 4 0 2020-08-04 13:53:02.443
+!MESSAGE 
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:08.891
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:08.984
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:09.012
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:54.120
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:54.141
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-04 14:52:54.161
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method stateRecurse in class CTAnalysisAST
+!STACK 0
+java.lang.NullPointerException

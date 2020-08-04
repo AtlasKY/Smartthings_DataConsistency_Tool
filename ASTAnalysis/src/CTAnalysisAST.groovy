@@ -91,7 +91,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//bl: binary leftside exp
 		//br: binary rightside exp
 		//s: scheduled execution
-		//p: + parameter name
+		//d: + device name
 		def pathLog = ""
 		
 		//cycle through all the handlers
@@ -152,10 +152,36 @@ class CTAnalysisAST extends CompilationCustomizer{
 			}
 		} //if it is an if statement call this method on the boolean expression, if block, and else block
 		else if(st instanceof IfStatement) {
+			def mods = ""
 			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
-			stateRecurse(est, hdl, cn, pth)
-			stateRecurse(st.getIfBlock(), hdl, cn, pth  + "c:")
-			stateRecurse(st.getElseBlock(), hdl, cn, pth  + "c:")
+			stateRecurse(est, hdl, cn, pth)//boolean block
+			
+			if(st.getElseBlock().isEmpty())
+				mods += "i-"
+			
+			if(est.getText().contains("now") || est.getText().contains("time"))	
+				mods += "t-"
+			
+			if(est.getText().contains("state."))
+				mods += "s-"
+			
+			hdl.args.each { a-> 
+				if(est.getText().contains(a + "."))
+					mods += "e-"
+			}
+			
+				
+			Expression mex = st.getBooleanExpression().getExpression()	
+			if(mex instanceof MethodCallExpression) {
+				def i = hdl.getMeth(mex.getMethodAsString())
+				if(hdl.calledMethods.get(i).useState) {
+
+									mods += "s-"
+				}
+			}
+				
+			stateRecurse(st.getIfBlock(), hdl, cn, pth  + mods + "ic:")//if block
+			stateRecurse(st.getElseBlock(), hdl, cn, pth  + mods + "ec:")
 		}
 		//if it is either an expression statement or return expression statement 
 		//cast it as expression and analyze
@@ -180,10 +206,23 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//get the name of the method
 				def mname = exp.getMethodAsString()
 				//add the method to the list of called methods from the handler
-				hdl.addMethodCall(exp, pth)
+				def sta = false
+				if(cn.getDeclaredMethods(exp.getMethodAsString()).size()>0) {
+					MethodNode mn = cn.getDeclaredMethods(exp.getMethodAsString()).get(0)
+					if(mn.getCode().getText().contains("state.")) {
+	//					println "meth contain state"
+						sta = true
+					}
+				}
+				def rec = exp.getReceiver().toString()
+				if(exp.getReceiver() instanceof VariableExpression)
+					rec = exp.getReceiver().getName()
 				
-				if(exp.getText().contains("timeofday") || exp.getText().contains("now")) {
-					println "Time: " + exp.getText()
+				boolean dev = hdl.devMethHelper(rec, devices)
+				hdl.addMethodCall(exp, pth, sta, dev)
+				
+				if(exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) {
+				//	println "Time: " + exp.getText()
 					hdl.addTimAcc(exp.getText())
 				}
 				
@@ -204,7 +243,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					handlerMNodeHelper(mn, hdl, cn, pth + "s:")
 				}
 				
-				//check for ntoification/sms sending functions, set the flag for message usage on the handler
+				//check for notification/sms sending functions, set the flag for message usage on the handler
 				if(exp.getText().contains("sendSms") || exp.getText().contains("sendPush")
 					|| exp.getText().contains("sendNotificationToContacts")) {
 					hdl.setMsg(true)
@@ -287,11 +326,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 			}
 			//if boolean expression, 
 			else if(exp instanceof BooleanExpression) {
+				//get the expression
 				Expression xp = exp.getExpression()
+				
+				//if it is a methodcallexpression
 				if(xp instanceof MethodCallExpression) {
 					def mname = xp.getMethodAsString()
-					hdl.addMethodCall(xp, pth)
-	//				println "Method Target: " + mname
 					if(cn.getDeclaredMethods(mname).size()>0)
 						handlerMNodeHelper(cn.getDeclaredMethods(mname).get(0), hdl, cn, pth + "b:")
 				}
@@ -303,9 +343,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 					hdl.addTimAcc(exp.getText())
 				}
 			}
-			/*else if(exp instanceof PropertyExpression) {
-				hdl.addReadState(exp.getText())
-			}*/
+			else if(exp instanceof PropertyExpression) {
+				if(exp.getText().contains("state.") && !pth.contains("bl:")) {
+					hdl.addReadState(exp.getText())
+				}
+			}
 		}
 		
 	}
