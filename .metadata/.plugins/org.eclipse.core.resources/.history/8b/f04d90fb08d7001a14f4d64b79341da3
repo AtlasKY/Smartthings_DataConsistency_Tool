@@ -1,0 +1,476 @@
+import org.codehaus.groovy.ast.expr.ArgumentListExpression
+import org.codehaus.groovy.ast.expr.ClosureExpression
+import org.codehaus.groovy.ast.expr.Expression
+import org.codehaus.groovy.ast.expr.MethodCallExpression
+import org.codehaus.groovy.ast.stmt.BlockStatement
+import org.codehaus.groovy.ast.stmt.ExpressionStatement
+
+class Handler{
+	
+	String name
+	String devName
+	
+	boolean hasMsg
+	boolean isSch
+	boolean schOverWrite
+	
+	List args
+	List eventTriggers
+	List readStates
+	List writeStates
+	List calledMethods
+	List devMethods
+	List deviceAccesses
+	List eventProps //what info of the event is used, if used
+	List timeAcc
+	
+	
+	public Handler(String n, String dn, String en) {
+		name = n
+		devName = dn
+		
+		hasMsg = false
+		isSch = false
+		schOverWrite = true
+		
+		eventTriggers = new ArrayList<String>()
+		
+		eventTriggers.add(en)
+		
+		args = new ArrayList<String>()
+		timeAcc = new ArrayList()
+		deviceAccesses = new ArrayList()
+		calledMethods = new ArrayList<Method>()
+		devMethods = new ArrayList<Method>()
+		eventProps = new ArrayList()
+		readStates = new ArrayList()
+		writeStates = new ArrayList()
+	}
+	
+	@Override
+	boolean equals(Object o) {
+		if(o instanceof Handler) {
+			return this.name == o.name
+		}
+	}
+	
+	void setSch(boolean owr) {
+		isSch = true
+		if(!owr) {
+			schOverWrite = false
+		}
+	}
+	
+	void setMsg(boolean b) {
+		hasMsg = b
+	}
+	
+	//Adds the arg string parameter of the handler call to the arguments list
+	void addArg(String arg) {
+		args.add(arg)
+	}
+	
+	//Get an expression as string, finds the last index of the argument passed to the handler contained in the string
+	//while there are still unprocessed presences of the handler parameter accesses,
+	//walks through the string beginning at the last index of the parameter name and adds the chars to a string
+	//until it reads a space, =, !, ?, or a closing parenthesis without an opening parenthesis immediately before it
+	//adds the constructed string to the list of event properties accessed arraylist if it's not already present
+	void addEvtProp(String prop) {
+		if(!eventProps.contains(prop)) {
+			def evt = ""
+			
+			def k = prop.length()
+			
+			args.each { arg->
+			
+				while((k = prop.lastIndexOf(arg, k-1))!= -1) {
+					def i = k
+					evt = ""
+					while(i < prop.size() && (prop.getAt(i)!= " " &&
+						((prop.getAt(i-1) != "(")? prop.getAt(i)!= ")":true) && prop.getAt(i)!= "=" && prop.getAt(i)!= "!"
+						&& prop.getAt(i)!= "?")) {
+					
+						evt = evt + prop.getAt(i)
+				//		println "Event Name: " + i +" "+ k + evt
+						i++
+					}
+					if(!eventProps.contains(evt))
+						eventProps.add(evt)
+				}
+				
+			}
+		}
+	}
+	
+	void addEvent(String evt) {
+		eventTriggers.add(evt)
+	}
+	
+	void addReadState(String s) {
+		if(!readStates.contains(s))
+			readStates.add(s)
+	}
+	
+	void addWriteState(String s) {
+		if(!writeStates.contains(s))
+			writeStates.add(s)
+	}
+	
+	void addDevAcc(String s) {
+		if(!deviceAccesses.contains(s))
+			deviceAccesses.add(s)
+	}
+	
+	boolean devMethHelper(String rec, List devices) {
+	//	println "Receiver " + rec
+		
+		def ret = false
+		
+		if(rec.contains("log") || rec.contains("this"))
+			return false
+				
+	//	println devices
+			
+		devices.each { d->
+			if(d.devName.contains(rec)) {
+	//			println devName + " " + rec
+				ret = true
+			}
+		}
+		return ret
+	}
+	
+	void addMethodCall(MethodCallExpression mexp, String path, boolean sta, boolean dev) {
+		addMethodCall(mexp, mexp.getReceiver().getText(), path, sta, dev)
+	}
+	
+	void addMethodCall(MethodCallExpression mexp, String receiver,  String path, boolean sta, boolean dev) {
+		String mName = mexp.getReceiver().getText() + "." + mexp.getMethodAsString()
+		
+		def rec = receiver
+		
+		if(path.contains("d:")) {
+			def devin = path.indexOf("d:")+2
+			def devname = ""
+			while(path.getAt(devin)!= ":") {
+				devname += path.getAt(devin)
+				devin++
+			}
+		//	println "Devname: " + devname + " Receiver: " + receiver
+			rec = devname
+			//println "Parameter Check: " + parname + " Dev Check: " + devname + "\nPath: " + path
+		}
+		Method m = new Method(rec, mexp.getMethodAsString())
+		
+		if(path.contains("s:")) {
+			
+		}
+		
+		m.setCallPath(path)
+		
+		if(sta) {
+			m.setState()
+			String state = ""
+			boolean isWrite = false
+			def ins = path.size() 
+			ins = path.lastIndexOf("st:", ins)
+			println path + ins + " " + path.size()
+			while( ins != -1) {
+				def i = ins + 3
+				println state
+//				println ins + " " + i + " " + 
+				while(i < path.size() && path.getAt(i) != ":") {
+					state += path.getAt(i)
+					i++
+				}
+				ins = path.lastIndexOf("st:", ins-1)
+			}
+			println state
+			if(writeStates.contains(state)) {
+				isWrite = true
+			}
+			m.addState(state, isWrite)
+		}
+		
+		if(path.contains("c:")) {
+		//	println "\nHandler: " + name
+			m.setCond()
+		}
+		
+		//.each{} call handling for method registration
+		if(mexp.getText().contains("each")) {
+	//		println "For each loop Meth Expression:\n" + mexp
+			mexp.getArguments().each { arg->
+				if(arg instanceof ClosureExpression) {
+					if(arg.getCode() instanceof BlockStatement) {
+						BlockStatement bl = arg.getCode()
+		//				println "Block statements: " + bl.getStatements()
+						bl.getStatements().each { st->
+			//				println "Statement " + st
+							if(st instanceof ExpressionStatement) {
+								Expression xp = st.getExpression()
+				//				println "Expression: " + xp
+				//				println "Method arguments: " + m.arguments
+								if(xp instanceof MethodCallExpression) {
+									m.addArg(xp)
+									addMethodCall(xp, rec, path)
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		else if(!mName.contains("log")){
+			m.addArg(mexp.getArguments())
+		}
+		if(!calledMethods.contains(m)) {
+			calledMethods.add(m)
+		}
+		if(dev) {
+			devMethods.add(m)
+		}
+		
+	}
+	
+	void addTimAcc(String s) {
+		timeAcc.add(s)
+	}
+	
+	int getMeth(String m) {
+		def i = 0
+		while(!calledMethods.get(i).getM().contains(m)) {
+			i++
+		}
+		return i
+	}
+	
+	@Override
+	public String toString() {
+		def state = ""
+		def methods = ""
+		def devMeth = ""
+		def stMeth = ""
+		def triggers = ""
+		def evprops = ""
+		def tAcc = ""
+		def msg = ""
+		def sch = ""
+		def nm = "Handler Name: " + name
+		nm = nm + "("
+		if(args.size()>0) {
+			args.each { arg->
+				nm = nm + arg
+			}
+		}
+		nm = nm + ")"
+		if(isSch) {
+			sch = "\nSchedule Overwrite: " + schOverWrite
+		}
+		if(eventProps.size()>0) {
+			evprops = "\nEvent Info Used: "
+			eventProps.each { p->
+				evprops = evprops + p + "; "
+			}
+		}
+		if(calledMethods.size()>0) {
+			methods = "\nCalled Methods: "
+			calledMethods.each { m->
+				if(!m.method.contains("log")) {
+					methods = methods + m + "; "
+				}
+				if(m.useState) {
+					stMeth += "	" + m.extString() + "\n"
+				}
+			}
+		}
+		if(devMethods.size()>0) {
+			devMeth = "\nDevice Methods: \n"
+			devMethods.each { m->
+				devMeth += "	" + m.extString() + "\n"
+			}
+		}
+		if(readStates.size()>0) {
+			state = "\nRead States: "
+			readStates.each { st->
+				state = state + st + "; "
+			}
+		}
+		if(writeStates.size()>0) {
+			state = state + "\nWrite States: "
+			writeStates.each { st->
+				state = state + st + "; "
+			}
+		}
+		if(eventTriggers.size()>0) {
+			triggers = "\nEvent Triggers: "
+			eventTriggers.each { tr->
+				triggers = triggers + tr + "; "
+			}
+		}
+		if(timeAcc.size()>0) {
+			tAcc = "\nTime Access: "
+			timeAcc.each { ta->
+				tAcc += ta + ";"
+			}
+		}
+		if(hasMsg) {
+			msg = "\nSend Notification/Msg"
+		}
+		
+		return nm + "\nDevice Name: " + devName + triggers + sch + evprops + methods + state + 
+		 msg + tAcc + devMeth + stMeth + "\n"
+	}
+	
+	class Method{
+		
+		String receiver
+		String method
+		String callPath
+		List arguments
+		boolean isCond
+		boolean useState
+		boolean isSch
+		String condPar
+		List rState
+		List wState
+		
+		
+		public Method(String r) {
+			this.Method(r, "")
+		}
+		
+		public Method(String r, String m) {
+			receiver = r
+			arguments = new ArrayList()
+			method = m
+			isCond = false
+			useState = false
+			condPar = ""
+			rState = new ArrayList()
+			wState = new ArrayList()
+		}
+		
+		void setSch() {
+			isSch = true
+		}
+		
+		void setState() {
+			useState = true
+		}
+		
+		void addState(String s, boolean isWrite) {
+			if(isWrite) {
+				wState.add(s)
+			} else {
+				rState.add(s)
+			}
+		}
+		
+		String getM() {
+			return method
+		}
+		
+		void setPath(String pth) {
+			callPath = pth
+		}
+		
+		void addMethod(String m) {
+			method = m
+		}
+		
+		void addArg(Expression argexp) {
+			if(argexp instanceof ArgumentListExpression) {
+				argexp.each { xp->
+					arguments.add(xp)
+				}
+			}else {
+				arguments.add(argexp)
+			}
+		}
+		
+		void setCond() {
+		//	println "Method: " + method
+			isCond = true
+			def ind = 3
+			String p = ""
+			while(ind <= callPath.length()) {
+				p = callPath.substring(ind-3, ind)
+				if(p.contains("t-")) {
+					condPar += "time-info:"
+					ind+=2
+				}
+				else if(p.contains("s-")) {
+					condPar += "state-info:"
+					ind+=2
+				}
+				else if(p.contains("e-")) {
+					condPar += "evt-info:"
+					ind+=2
+				}
+				else if(p.contains("i-")) {
+					condPar += "no-else:"
+					ind+=2
+				}
+				else if(p.contains("ic:")) {
+					condPar += "if:"
+					ind+=3
+				}
+				else if(p.contains("ec:")) {
+					condPar += "else:"
+					ind+=3
+				}
+				else
+					ind++
+				
+			}
+		//	println "Path p: " + callPath + "\nCond Parameters: " + condPar
+		}
+		
+		@Override
+		boolean equals(Object o) {
+			if(o instanceof Method) {
+				return (this.receiver.equals(o.receiver) && this.method.equals(o.method) && (this.isCond == o.isCond))
+			}
+			else if(o instanceof String) {
+				return this.method.contains(o)
+			}
+			else
+				false
+		}
+		
+		String extString() {
+			def str = this.toString() + "\n"
+			if(isCond)
+				str += "		Conditionals: " + condPar + "\n"
+			
+			if(useState) {
+				str += "		State: "
+				rState.each { s->
+					str += "R: " + s + "; "
+				}
+				wState.each { s->
+					str += "W: " + s + "; "
+				}
+			}
+			return str
+		}
+		
+		@Override
+		public String toString() {
+			String st = receiver + "." + method + "("
+			arguments.each { exp->
+				st = st + exp.getText()
+				if(arguments.size()-arguments.indexOf(exp)-1 > 0) {
+					st = st + ", "
+				}
+			}
+			st = st + ")"
+			if(isCond) {
+				st += "[cond-ex]"
+			}
+			return st
+		}
+		
+	}
+}

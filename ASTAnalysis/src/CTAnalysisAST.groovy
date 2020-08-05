@@ -92,11 +92,18 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//br: binary rightside exp
 		//s: scheduled execution
 		//d: + device name
-		def pathLog = ""
+		def pathLog 
 		
 		//cycle through all the handlers
 		handlers.each { hdl->
 		//	println "Handler Name: " + hdl.name
+			
+			if(hdl.devName.contains("Scheduler")) {
+				pathLog = "s:"
+			}
+			else {
+				pathLog = ""
+			}
 			
 			//for each get the method node of the handler method from the classnode
 			MethodNode methN = cn.getDeclaredMethods(hdl.name).get(0)
@@ -115,7 +122,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//println mt.method
 				if(cn.getDeclaredMethods(mt.method).size()>0) {
 					methN = cn.getDeclaredMethods(mt.method).get(0)
-					handlerMNodeHelper(methN, hdl, cn, mt.callPath)
+					handlerMNodeHelper(methN, hdl, cn, pathLog + mt.callPath)
 				}
 			}
 		
@@ -128,8 +135,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//methodnode exists
 		if(mn!=null) {
 			//println mn.getName()
-	//		if(mn.getName().contains("takeAction"))
-		//		println mn.getName()
 			
 			//get the code of the method node as a block statement
 			BlockStatement block = (BlockStatement) mn.getCode()
@@ -162,11 +167,13 @@ class CTAnalysisAST extends CompilationCustomizer{
 			if(est.getText().contains("now") || est.getText().contains("time"))	
 				mods += "t-"
 			
-			if(est.getText().contains("state."))
+			if(est.getText().contains("state.")) {
+				
 				mods += "s-"
+			}
 			
 			hdl.args.each { a-> 
-				if(est.getText().contains(a + "."))
+				if(est.getText().contains(a))
 					mods += "e-"
 			}
 			
@@ -175,8 +182,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 			if(mex instanceof MethodCallExpression) {
 				def i = hdl.getMeth(mex.getMethodAsString())
 				if(hdl.calledMethods.get(i).useState) {
-
-									mods += "s-"
+					mods += "s-"
 				}
 			}
 				
@@ -206,20 +212,36 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//get the name of the method
 				def mname = exp.getMethodAsString()
 				//add the method to the list of called methods from the handler
+				
+				//Check if the method itself uses state and log that info when creating a method object
 				def sta = false
+				def stat = ""
 				if(cn.getDeclaredMethods(exp.getMethodAsString()).size()>0) {
 					MethodNode mn = cn.getDeclaredMethods(exp.getMethodAsString()).get(0)
 					if(mn.getCode().getText().contains("state.")) {
 	//					println "meth contain state"
+						String code = mn.getCode().getText()
+						def sin = code.lastIndexOf("state.")
+						sin += 6
+						stat = "st:"
+						while(code.getAt(sin)!=" ") {
+							stat += code.getAt(sin)
+							sin++
+						}
+						stat += ":"
+//						println stat + " " + hdl.name
 						sta = true
 					}
 				}
+				
+				//get the receiver of the method call
 				def rec = exp.getReceiver().toString()
 				if(exp.getReceiver() instanceof VariableExpression)
 					rec = exp.getReceiver().getName()
-				
+					
+				//create and add the method call to the handler
 				boolean dev = hdl.devMethHelper(rec, devices)
-				hdl.addMethodCall(exp, pth, sta, dev)
+				hdl.addMethodCall(exp, pth + stat, sta, dev)
 				
 				if(exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) {
 				//	println "Time: " + exp.getText()
@@ -230,7 +252,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 				if(exp.getText().toLowerCase().contains("runin") || exp.getText().toLowerCase().contains("schedule") 
 					|| exp.getText().toLowerCase().contains("runonce") || exp.getText().toLowerCase().contains("runevery")) {
 					//get the argument that contains the name of the method scheduled for execution
-					def schMeth
+					String schMeth = ""
+//					println exp
 					if(!exp.getText().toLowerCase().contains("runevery")) {
 						schMeth = exp.getArguments().getAt(1).getText()
 					} else {
@@ -239,8 +262,19 @@ class CTAnalysisAST extends CompilationCustomizer{
 					
 					//find the declared method within the code and get the method node
 					def mn = cn.getDeclaredMethods(schMeth).get(0)
-					//call the analysis tool on the method node
-					handlerMNodeHelper(mn, hdl, cn, pth + "s:")
+					
+					//create a new methodcallexpression statement using the schedule as the receiver,
+					//the name of the method scheduled as the method name
+					//and the parameters of that method node converted to an argument list expression as arguments
+					ExpressionStatement ext = new ExpressionStatement(
+						new MethodCallExpression(
+							new VariableExpression("this"), 
+							schMeth, 
+							new ArgumentListExpression(mn.getParameters())))
+					
+//					println "Path " + pth
+					
+					stateRecurse(ext, hdl, cn, pth + "s:")
 				}
 				
 				//check for notification/sms sending functions, set the flag for message usage on the handler
@@ -261,7 +295,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					//get the receiver of the call to foreach
 					def recver = exp.getReceiver().getText()
 					def isDev = false //a flag for whether the receiver is a device or not
-					println "Path: " + pth
+//					println "Path: " + pth
 					
 					//cycle through the devices to see if it contains the receiver,
 					//if it contains then set isDev to true
@@ -272,20 +306,20 @@ class CTAnalysisAST extends CompilationCustomizer{
 					}
 					
 					def parName = ""
-					println "Closure: MCE " + exp
+//					println "Closure: MCE " + exp
 					ClosureExpression ce = exp.getArguments().getAt(0)
 					
-					println "Closure : " + ce
+//					println "Closure : " + ce
 					BlockStatement bst = (BlockStatement) ce.getCode()
 					//if it is a device that is being accessed, get the stand-in variable for the device
 					//pass the name of the parameter into the path log string
 					if(isDev) {
 						//if uses parameter -> {...} format	
-						println "Path: " + pth
+//						println "Path: " + pth
 						
 						bst.getStatements().each { bs->
-							println "Recurse the Block in Closure"
-							println "Path: " + pth
+//							println "Recurse the Block in Closure"
+//							println "Path: " + pth
 							stateRecurse(bs, hdl, cn, pth + "d:" + recver + ":")
 						}
 						
@@ -468,37 +502,29 @@ class CTAnalysisAST extends CompilationCustomizer{
 					dname = varex.getName()
 					//println "Dev Name: "
 				
-					}
+				}
 				
 				if(arglist.get(1) instanceof ConstantExpression){
 					
 					ConstantExpression conex = (ConstantExpression) arglist.get(1)
 					
 					ename = conex.getValue()
-				
-					}
+				}
 				
 				if(arglist.get(2) instanceof VariableExpression){
-					
 					VariableExpression varex = (VariableExpression) arglist.get(2)
 					
 					hname = varex.getName()
-				} else if(arglist.get(2) instanceof ConstantExpression) {
+				} 
+				else if(arglist.get(2) instanceof ConstantExpression) {
 					ConstantExpression conex = (ConstantExpression) arglist.get(2)
 					
 					hname = conex.getValue()
-				
 				}
 				
 		//		println "Handler: " + hname + " " + dname + " " + ename
 				
 				handlerAdder(new Handler(hname, dname, dname + "." + ename))
-				
-				/*
-				if(allDecMeths.contains(hname)) {
-					println "Handler Method Node: " + allDecMeths.get(allDecMeths.indexOf(hname))
-				}
-				*/
 				
 			}
 			
@@ -509,8 +535,28 @@ class CTAnalysisAST extends CompilationCustomizer{
 				def hname = ((ConstantExpression) arglist.get(1)).getValue()
 				def dname = "Scheduler"
 				def ename = "Schedule on " + ((VariableExpression)arglist.get(0)).getName()
+				boolean schOvrWr = true 
 				
-				handlers.add(new Handler(hname, dname, ename))
+				//get the arguments, if there are more than 2 arguments that means there's an explicit
+				//setting of overwrite or other properties
+				//check the map of modified parameters for overwrite
+				//if it is set to false, update the schOvrWr boolean to false
+				if(arglist.size() > 2) {
+					MapExpression mep = arglist.get(2)
+					mep.getMapEntryExpressions().each { mee->
+						if(mee.getKeyExpression().getText().contains("overwrite")) {
+							if(mee.getValueExpression().getText().contains("false"))
+								schOvrWr = false
+						}
+					}
+					
+				}
+				
+				Handler h = new Handler(hname, dname, ename)
+				
+				h.setSch(schOvrWr)
+				
+				handlers.add(h)
 				
 			}
 			

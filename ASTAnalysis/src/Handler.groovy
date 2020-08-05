@@ -11,6 +11,8 @@ class Handler{
 	String devName
 	
 	boolean hasMsg
+	boolean isSch
+	boolean schOverWrite
 	
 	List args
 	List eventTriggers
@@ -26,16 +28,17 @@ class Handler{
 	public Handler(String n, String dn, String en) {
 		name = n
 		devName = dn
+		
 		hasMsg = false
+		isSch = false
+		schOverWrite = true
 		
 		eventTriggers = new ArrayList<String>()
 		
 		eventTriggers.add(en)
 		
 		args = new ArrayList<String>()
-		
 		timeAcc = new ArrayList()
-		
 		deviceAccesses = new ArrayList()
 		calledMethods = new ArrayList<Method>()
 		devMethods = new ArrayList<Method>()
@@ -48,6 +51,13 @@ class Handler{
 	boolean equals(Object o) {
 		if(o instanceof Handler) {
 			return this.name == o.name
+		}
+	}
+	
+	void setSch(boolean owr) {
+		isSch = true
+		if(!owr) {
+			schOverWrite = false
 		}
 	}
 	
@@ -152,10 +162,34 @@ class Handler{
 		}
 		Method m = new Method(rec, mexp.getMethodAsString())
 		
+		if(path.contains("s:")) {
+			m.setSch()
+		}
+		
 		m.setCallPath(path)
 		
 		if(sta) {
 			m.setState()
+			String state = ""
+			boolean isWrite = false
+			def ins = path.size() 
+			ins = path.lastIndexOf("st:", ins)
+			println path + ins + " " + path.size()
+			while( ins != -1) {
+				def i = ins + 3
+				println state
+//				println ins + " " + i + " " + 
+				while(i < path.size() && path.getAt(i) != ":") {
+					state += path.getAt(i)
+					i++
+				}
+				ins = path.lastIndexOf("st:", ins-1)
+			}
+			println state
+			if(writeStates.contains(state)) {
+				isWrite = true
+			}
+			m.addState(state, isWrite)
 		}
 		
 		if(path.contains("c:")) {
@@ -179,7 +213,7 @@ class Handler{
 				//				println "Method arguments: " + m.arguments
 								if(xp instanceof MethodCallExpression) {
 									m.addArg(xp)
-									addMethodCall(xp, rec, path)
+									addMethodCall(xp, rec, path, sta, dev)
 								}
 							}
 						}
@@ -193,14 +227,15 @@ class Handler{
 		if(!calledMethods.contains(m)) {
 			calledMethods.add(m)
 		}
-		if(dev) {
+		if(dev && !devMethods.contains(m)) {
 			devMethods.add(m)
 		}
 		
 	}
 	
 	void addTimAcc(String s) {
-		timeAcc.add(s)
+		if(!timeAcc.contains(s))
+			timeAcc.add(s)
 	}
 	
 	int getMeth(String m) {
@@ -216,10 +251,12 @@ class Handler{
 		def state = ""
 		def methods = ""
 		def devMeth = ""
+		def stMeth = ""
 		def triggers = ""
 		def evprops = ""
 		def tAcc = ""
 		def msg = ""
+		def sch = ""
 		def nm = "Handler Name: " + name
 		nm = nm + "("
 		if(args.size()>0) {
@@ -228,6 +265,9 @@ class Handler{
 			}
 		}
 		nm = nm + ")"
+		if(isSch) {
+			sch = "\nSchedule Overwrite: " + schOverWrite
+		}
 		if(eventProps.size()>0) {
 			evprops = "\nEvent Info Used: "
 			eventProps.each { p->
@@ -237,8 +277,12 @@ class Handler{
 		if(calledMethods.size()>0) {
 			methods = "\nCalled Methods: "
 			calledMethods.each { m->
-				if(!m.method.contains("log"))
+				if(!m.method.contains("log")) {
 					methods = methods + m + "; "
+				}
+				if(m.useState) {
+					stMeth += "	" + m.extString() + "\n"
+				}
 			}
 		}
 		if(devMethods.size()>0) {
@@ -275,8 +319,8 @@ class Handler{
 			msg = "\nSend Notification/Msg"
 		}
 		
-		return nm + "\nDevice Name: " + devName + triggers + evprops + methods + state + 
-		 msg + tAcc + devMeth + "\n"
+		return nm + "\nDevice Name: " + devName + triggers + sch + evprops + methods + state + 
+		 msg + tAcc + devMeth + stMeth + "\n"
 	}
 	
 	class Method{
@@ -287,7 +331,11 @@ class Handler{
 		List arguments
 		boolean isCond
 		boolean useState
+		boolean isSch
 		String condPar
+		List rState
+		List wState
+		
 		
 		public Method(String r) {
 			this.Method(r, "")
@@ -299,11 +347,26 @@ class Handler{
 			method = m
 			isCond = false
 			useState = false
+			isSch = false
 			condPar = ""
+			rState = new ArrayList()
+			wState = new ArrayList()
+		}
+		
+		void setSch() {
+			isSch = true
 		}
 		
 		void setState() {
 			useState = true
+		}
+		
+		void addState(String s, boolean isWrite) {
+			if(isWrite) {
+				wState.add(s)
+			} else {
+				rState.add(s)
+			}
 		}
 		
 		String getM() {
@@ -369,7 +432,7 @@ class Handler{
 		@Override
 		boolean equals(Object o) {
 			if(o instanceof Method) {
-				return (this.receiver.equals(o.receiver) && this.method.equals(o.method) && (this.isCond == o.isCond))
+				return (this.receiver.equals(o.receiver) && this.method.equals(o.method) && (this.condPar == o.condPar))
 			}
 			else if(o instanceof String) {
 				return this.method.contains(o)
@@ -381,8 +444,17 @@ class Handler{
 		String extString() {
 			def str = this.toString() + "\n"
 			if(isCond)
-				str += "		Conditionals: " + condPar
-				
+				str += "		Conditionals: " + condPar + "\n"
+			
+			if(useState) {
+				str += "		State: "
+				rState.each { s->
+					str += "R: " + s + "; "
+				}
+				wState.each { s->
+					str += "W: " + s + "; "
+				}
+			}
 			return str
 		}
 		
@@ -398,6 +470,9 @@ class Handler{
 			st = st + ")"
 			if(isCond) {
 				st += "[cond-ex]"
+			}
+			if(isSch) {
+				st += "[scheduled]"
 			}
 			return st
 		}
