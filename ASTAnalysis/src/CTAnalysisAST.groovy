@@ -168,13 +168,22 @@ class CTAnalysisAST extends CompilationCustomizer{
 				mods += "t-"
 			
 			if(est.getText().contains("state.")) {
-				
 				mods += "s-"
 			}
 			
 			hdl.args.each { a-> 
-				if(est.getText().contains(a))
-					mods += "e-"
+				if(est.getText().contains(a)) {
+					String txt = est.getText()
+					println txt
+					mods += "e-" + a + "."
+					def i = txt.indexOf(a) + a.length() + 1
+					while(i<txt.size() && !(txt.getAt(i)== " " || txt.getAt(i)== "=" || txt.getAt(i)== "!")){
+						mods += txt.getAt(i)
+						i++
+					}
+					mods += "|-"
+					println mods
+				}
 			}
 			
 				

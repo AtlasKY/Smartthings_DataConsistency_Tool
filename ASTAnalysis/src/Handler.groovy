@@ -194,7 +194,8 @@ class Handler{
 		
 		if(path.contains("c:")) {
 		//	println "\nHandler: " + name
-			m.setCond()
+			if(!m.isCond)
+				m.setCond()
 		}
 		
 		//.each{} call handling for method registration
@@ -335,7 +336,7 @@ class Handler{
 		String condPar
 		List rState
 		List wState
-		
+		List evtVal
 		
 		public Method(String r) {
 			this.Method(r, "")
@@ -349,6 +350,7 @@ class Handler{
 			useState = false
 			isSch = false
 			condPar = ""
+			evtVal = new ArrayList()
 			rState = new ArrayList()
 			wState = new ArrayList()
 		}
@@ -392,12 +394,16 @@ class Handler{
 		}
 		
 		void setCond() {
-		//	println "Method: " + method
+//			println "Method: " + method
+			
 			isCond = true
 			def ind = 3
 			String p = ""
 			while(ind <= callPath.length()) {
+//				println "Method: " + method
+//				println "CAllPath " + callPath
 				p = callPath.substring(ind-3, ind)
+//				println "P: " + p
 				if(p.contains("t-")) {
 					condPar += "time-info:"
 					ind+=2
@@ -407,8 +413,23 @@ class Handler{
 					ind+=2
 				}
 				else if(p.contains("e-")) {
-					condPar += "evt-info:"
-					ind+=2
+//					sleep(1000)
+					condPar += "evt-info("
+					p = callPath.substring(ind-3)
+//					println "P: " + p
+					def i = p.indexOf("e-", ind-3) + 2
+					def evt = ""
+					while(i < p.length() && p.getAt(i)!="|") {
+						evt += p.getAt(i)
+//						println condPar
+						i++
+					}
+					evtVal.add(evt)
+					condPar += evt + "):"
+//					println ind + " " + i
+//					println condPar
+					ind = i + 5
+//					println ind + " " + i
 				}
 				else if(p.contains("i-")) {
 					condPar += "no-else:"
@@ -454,7 +475,18 @@ class Handler{
 				wState.each { s->
 					str += "W: " + s + "; "
 				}
+				str += "\n"
 			}
+			
+			if(evtVal.size()>0)
+			{
+				str += "		Event Values:"
+				evtVal.each { e->
+					str += " " + e
+				}
+				str += "\n"
+			}
+			
 			return str
 		}
 		
