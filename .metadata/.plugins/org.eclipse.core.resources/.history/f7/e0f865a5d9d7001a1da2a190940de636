@@ -1,0 +1,127 @@
+
+import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.CompilerConfiguration
+
+class ConsistencyAnalysis {
+	
+	List handlers
+	List devices
+	
+	List results
+	
+	public ConsistencyAnalysis(List hdls, List devs) {
+		
+		handlers = new ArrayList()
+		handlers = hdls
+		
+		devices = new ArrayList()
+		devices = devs
+		
+		results = new ArrayList<AnalysisResult>()
+		
+	}
+	
+	void analyse() {
+		
+		for(int i = 0; i < handlers.size(); i++) {
+			
+			for(int j = i; j < handlers.size(); j++) {
+				
+				results.add(analysisHelper(handlers.get(i), handlers.get(j)))
+				
+			}	
+		}
+	}
+	
+	AnalysisResult analysisHelper(Handler h1, Handler h2) {
+		
+		AnalysisResult ar = new AnalysisResult(h1, h2)
+		
+		ar.stateRes(stateAnalysis(h1, h2))
+		
+		ar.usrImpRes(userImpactAnalysis(h1, h2))
+		
+		ar.devModRes(devModAnalysis(h1, h2))
+	}
+	
+	int stateAnalysis(Handler h1, Handler h2) {
+		
+	}
+	
+	int userImpactAnalysis(Handler h1, Handler h2) {
+		
+	}
+	
+	int devModAnalysis(Handler h1, Handler h2) {
+		
+	}
+	
+	//An object to store the result of the analysis
+	//The handlers involved hdl1 and hdl2
+	//The issues come across
+	class AnalysisResult{
+		
+		Handler hdl1
+		Handler hdl2
+		
+		int stateMod
+		int usrImp
+		int deviceMod
+		
+		String result
+		
+		public AnalysisResult(Handler h1, Handler h2) {
+			
+			hdl1 = h1
+			hdl2 = h2
+			result = ""
+			
+		}
+		
+		void stateRes(int res) {
+			stateMod = res
+			switch(res) {
+				case 0:
+					result += "No state usage in the handlers\n"
+					break;
+				case 1:
+					result += "State Safe!\n"
+					result += "Handler 1: " + hdl1.name + "only reads state variables "
+					hdl1.readStates.each { rs->
+						result += rs + "; "
+					}
+					result += "\nHandler 2 " + hdl2.name + "does not use state.\n"
+					break;
+				case 2:
+					result += "State Safe!\n"
+					result += "Handler 1 " + hdl1.name + "does not use state.\n"
+					result += "Handler 2: " + hdl2.name + "only reads state variables "
+					hdl2.readStates.each { rs->
+						result += rs + "; "
+					}
+					result += "\n"
+					break;
+				case 3:
+					break;
+				case 4:
+					break;
+				case 5:
+					break;
+				case 6:
+					break;
+			}
+		}
+		
+		void usrImpRes(int res) {
+			usrImp = res
+		}
+		
+		void devModRes(int res) {
+			deviceMod = res
+		}
+		
+	}
+	
+}

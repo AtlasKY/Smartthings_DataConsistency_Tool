@@ -174,10 +174,10 @@ class Handler{
 			boolean isWrite = false
 			def ins = path.size() 
 			ins = path.lastIndexOf("st:", ins)
-			println path + ins + " " + path.size()
+			//println path + ins + " " + path.size()
 			while( ins != -1) {
 				def i = ins + 3
-				println state
+				//println state
 //				println ins + " " + i + " " + 
 				while(i < path.size() && path.getAt(i) != ":") {
 					state += path.getAt(i)
@@ -185,7 +185,7 @@ class Handler{
 				}
 				ins = path.lastIndexOf("st:", ins-1)
 			}
-			println state
+			//println state
 			if(writeStates.contains(state)) {
 				isWrite = true
 			}

@@ -4968,3 +4968,333 @@ Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: comme
 
 !ENTRY org.eclipse.jdt.debug 2 0 2020-08-05 15:45:52.949
 !MESSAGE Unable to find location of java.lang.Thread.setName() in debuggee JVM, for type java.lang.Thread
+!SESSION 2020-08-06 12:24:46.052 -----------------------------------------------
+eclipse.buildId=4.16.0.I20200604-0540
+java.version=1.8.0_261
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY org.eclipse.jface 2 0 2020-08-06 12:27:29.556
+!MESSAGE Keybinding conflicts occurred.  They may interfere with normal accelerator operation.
+!SUBENTRY 1 org.eclipse.jface 2 0 2020-08-06 12:27:29.556
+!MESSAGE A conflict occurred for CTRL+SHIFT+T:
+Binding(CTRL+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.jdt.ui.navigate.open.type,Open Type,
+		Open a type in a Java editor,
+		Category(org.eclipse.ui.category.navigate,Navigate,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@7f77e065,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+Binding(CTRL+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.lsp4e.symbolinworkspace,Go to Symbol in Workspace,
+		,
+		Category(org.eclipse.lsp4e.category,Language Servers,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@6f655dbd,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+
+!ENTRY org.eclipse.egit.ui 2 0 2020-08-06 12:27:38.090
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\AtlasKaan'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-06 12:41:42.882
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting types for ConsistencyAnalysis.groovy
+!STACK 0
+java.lang.RuntimeException: Failed to initialize members for type org.codehaus.groovy.ast.ClassNode
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:325)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.lazyClassInit(JDTClassNode.java:183)
+	at org.codehaus.groovy.ast.ClassNode.getUnresolvedSuperClass(ClassNode.java:1081)
+	at org.codehaus.groovy.ast.ClassNode.getUnresolvedSuperClass(ClassNode.java:1069)
+	at org.codehaus.groovy.ast.ClassNode.getSuperClass(ClassNode.java:1063)
+	at org.codehaus.groovy.ast.ClassNode.isDerivedFrom(ClassNode.java:970)
+	at org.codehaus.groovy.ast.ClassNode.isScript(ClassNode.java:1254)
+	at org.codehaus.groovy.eclipse.core.search.FindAllReferencesRequestor.acceptASTNode(FindAllReferencesRequestor.java:76)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.notifyRequestor(TypeInferencingVisitorWithRequestor.java:2705)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitClassReference(TypeInferencingVisitorWithRequestor.java:601)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitImports(TypeInferencingVisitorWithRequestor.java:548)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:253)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.internalFindOccurences(GroovyOccurrencesFinder.java:138)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.getOccurrences(GroovyOccurrencesFinder.java:86)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.findOccurrences(GroovyOccurrencesFinder.java:194)
+	at org.codehaus.groovy.eclipse.editor.GroovyEditor.updateOccurrenceAnnotations(GroovyEditor.java:1314)
+	at org.eclipse.jdt.internal.ui.javaeditor.JavaEditor$6.selectionChanged(JavaEditor.java:3383)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:184)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: java.lang.NullPointerException
+	at org.eclipse.jdt.internal.compiler.lookup.TypeSystem.getParameterizedType(TypeSystem.java:337)
+	at org.eclipse.jdt.internal.compiler.lookup.AnnotatableTypeSystem.getParameterizedType(AnnotatableTypeSystem.java:128)
+	at org.eclipse.jdt.internal.compiler.lookup.AnnotatableTypeSystem.getParameterizedType(AnnotatableTypeSystem.java:142)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createParameterizedType(LookupEnvironment.java:1372)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeFromTypeSignature(LookupEnvironment.java:2045)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.createFields(BinaryTypeBinding.java:710)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.cachePartsFrom(BinaryTypeBinding.java:569)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1063)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1044)
+	at org.eclipse.jdt.internal.compiler.Compiler.accept(Compiler.java:318)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.askForType(LookupEnvironment.java:259)
+	at org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding.resolve(UnresolvedReferenceBinding.java:114)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:248)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveTypesFor(BinaryTypeBinding.java:1709)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.methods(BinaryTypeBinding.java:1646)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:220)
+	... 19 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-06 13:25:30.934
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method ConsistencyAnalysis in class ConsistencyAnalysis
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.jdt.internal.compiler.lookup.TypeSystem.getWildcard(TypeSystem.java:424)
+	at org.eclipse.jdt.internal.compiler.lookup.AnnotatableTypeSystem.getWildcard(AnnotatableTypeSystem.java:210)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeFromVariantTypeSignature(LookupEnvironment.java:2120)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeArgumentsFromSignature(LookupEnvironment.java:1754)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeFromTypeSignature(LookupEnvironment.java:2044)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.createMethod(BinaryTypeBinding.java:885)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.createMethods(BinaryTypeBinding.java:1010)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.cachePartsFrom(BinaryTypeBinding.java:570)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1063)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1044)
+	at org.eclipse.jdt.internal.compiler.Compiler.accept(Compiler.java:318)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.askForType(LookupEnvironment.java:259)
+	at org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding.resolve(UnresolvedReferenceBinding.java:114)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:248)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.resolve(ParameterizedTypeBinding.java:1240)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:219)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superInterfaces(BinaryTypeBinding.java:2210)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.superInterfaces(ParameterizedTypeBinding.java:1474)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superclass(BinaryTypeBinding.java:2137)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.superclass(ParameterizedTypeBinding.java:1456)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superclass(BinaryTypeBinding.java:2136)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.lazyClassInit(JDTClassNode.java:167)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1533)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.getAnnotations(JDTClassNode.java:504)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1532)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:68)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:47)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FilteringPointcut.matches(FilteringPointcut.java:48)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.AbstractPointcut.matchOnPointcutArgument(AbstractPointcut.java:124)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.CurrentTypePointcut.matches(CurrentTypePointcut.java:64)
+	at org.codehaus.groovy.eclipse.dsl.DSLDStore.findContributions(DSLDStore.java:146)
+	at org.codehaus.groovy.eclipse.dsl.lookup.DSLDTypeLookup.lookupTypeAndDeclaration(DSLDTypeLookup.java:86)
+	at org.eclipse.jdt.groovy.search.AbstractSimplifiedTypeLookup.lookupType(AbstractSimplifiedTypeLookup.java:144)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.lookupExpressionType(TypeInferencingVisitorWithRequestor.java:2669)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1963)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1968)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorCallExpression(TypeInferencingVisitorWithRequestor.java:989)
+	at org.codehaus.groovy.ast.expr.ConstructorCallExpression.visit(ConstructorCallExpression.java:44)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitBinaryExpression(TypeInferencingVisitorWithRequestor.java:759)
+	at org.codehaus.groovy.ast.expr.BinaryExpression.visit(BinaryExpression.java:58)
+	at org.codehaus.groovy.ast.CodeVisitorSupport.visitExpressionStatement(CodeVisitorSupport.java:117)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitExpressionStatement(ClassCodeVisitorSupport.java:252)
+	at org.codehaus.groovy.ast.stmt.ExpressionStatement.visit(ExpressionStatement.java:40)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorOrMethod(TypeInferencingVisitorWithRequestor.java:1092)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitMethodInternal(TypeInferencingVisitorWithRequestor.java:658)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:466)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.codebrowsing.requestor.CodeSelectHelper.selectASTNode(CodeSelectHelper.java:130)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.initialize(GroovyOccurrencesFinder.java:164)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.findOccurrences(GroovyOccurrencesFinder.java:193)
+	at org.codehaus.groovy.eclipse.editor.GroovyEditor.updateOccurrenceAnnotations(GroovyEditor.java:1314)
+	at org.eclipse.jdt.internal.ui.javaeditor.JavaEditor$6.selectionChanged(JavaEditor.java:3383)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:184)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-06 13:57:12.923
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting types for ConsistencyAnalysis.groovy
+!STACK 0
+java.lang.RuntimeException: Failed to initialize members for type java.util.List
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:325)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.lazyClassInit(JDTClassNode.java:183)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1533)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.getAnnotations(JDTClassNode.java:504)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.getAnnotations(JDTClassNode.java:511)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1539)
+	at org.codehaus.groovy.transform.trait.Traits.isAnnotatedWithTrait(Traits.java:190)
+	at org.codehaus.groovy.transform.trait.Traits.isTrait(Traits.java:171)
+	at org.codehaus.groovy.eclipse.editor.highlighting.SemanticHighlightingReferenceRequestor.handleClassReference(SemanticHighlightingReferenceRequestor.java:277)
+	at org.codehaus.groovy.eclipse.editor.highlighting.SemanticHighlightingReferenceRequestor.acceptASTNode(SemanticHighlightingReferenceRequestor.java:139)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.notifyRequestor(TypeInferencingVisitorWithRequestor.java:2705)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitClassReference(TypeInferencingVisitorWithRequestor.java:601)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitField(TypeInferencingVisitorWithRequestor.java:1167)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:433)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:320)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GatherSemanticReferences.findSemanticHighlightingReferences(GatherSemanticReferences.java:43)
+	at org.codehaus.groovy.eclipse.editor.highlighting.GroovySemanticReconciler.reconciled(GroovySemanticReconciler.java:288)
+	at org.eclipse.jdt.internal.ui.javaeditor.CompilationUnitEditor.reconciled(CompilationUnitEditor.java:1691)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconciled(JavaReconcilingStrategy.java:222)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconciled(JavaCompositeReconcilingStrategy.java:167)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:115)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+Caused by: java.lang.NullPointerException
+	at org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding.setResolvedType(UnresolvedReferenceBinding.java:148)
+	at org.eclipse.jdt.internal.compiler.lookup.PackageBinding.addType(PackageBinding.java:104)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1061)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1044)
+	at org.eclipse.jdt.internal.compiler.Compiler.accept(Compiler.java:318)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.askForType(LookupEnvironment.java:259)
+	at org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding.resolve(UnresolvedReferenceBinding.java:114)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:248)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.resolve(ParameterizedTypeBinding.java:1240)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:219)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveTypesFor(BinaryTypeBinding.java:1702)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.methods(BinaryTypeBinding.java:1646)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:220)
+	... 23 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-06 14:04:08.479
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method ConsistencyAnalysis in class ConsistencyAnalysis
+!STACK 0
+java.lang.RuntimeException: Failed to initialize members for type java.util.ArrayList
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:325)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.lazyClassInit(JDTClassNode.java:183)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1533)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.getAnnotations(JDTClassNode.java:504)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1532)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:68)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:47)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FilteringPointcut.matches(FilteringPointcut.java:48)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.AbstractPointcut.matchOnPointcutArgument(AbstractPointcut.java:124)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.CurrentTypePointcut.matches(CurrentTypePointcut.java:64)
+	at org.codehaus.groovy.eclipse.dsl.DSLDStore.findContributions(DSLDStore.java:146)
+	at org.codehaus.groovy.eclipse.dsl.lookup.DSLDTypeLookup.lookupTypeAndDeclaration(DSLDTypeLookup.java:86)
+	at org.eclipse.jdt.groovy.search.AbstractSimplifiedTypeLookup.lookupType(AbstractSimplifiedTypeLookup.java:144)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.lookupExpressionType(TypeInferencingVisitorWithRequestor.java:2669)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1963)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1968)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorCallExpression(TypeInferencingVisitorWithRequestor.java:989)
+	at org.codehaus.groovy.ast.expr.ConstructorCallExpression.visit(ConstructorCallExpression.java:44)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitBinaryExpression(TypeInferencingVisitorWithRequestor.java:759)
+	at org.codehaus.groovy.ast.expr.BinaryExpression.visit(BinaryExpression.java:58)
+	at org.codehaus.groovy.ast.CodeVisitorSupport.visitExpressionStatement(CodeVisitorSupport.java:117)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitExpressionStatement(ClassCodeVisitorSupport.java:252)
+	at org.codehaus.groovy.ast.stmt.ExpressionStatement.visit(ExpressionStatement.java:40)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorOrMethod(TypeInferencingVisitorWithRequestor.java:1092)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitMethodInternal(TypeInferencingVisitorWithRequestor.java:658)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:466)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.codebrowsing.requestor.CodeSelectHelper.selectASTNode(CodeSelectHelper.java:130)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.initialize(GroovyOccurrencesFinder.java:164)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.findOccurrences(GroovyOccurrencesFinder.java:193)
+	at org.codehaus.groovy.eclipse.editor.GroovyEditor.updateOccurrenceAnnotations(GroovyEditor.java:1314)
+	at org.eclipse.jdt.internal.ui.javaeditor.JavaEditor$6.selectionChanged(JavaEditor.java:3383)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:184)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+Caused by: java.lang.NullPointerException
+	at org.eclipse.jdt.internal.compiler.lookup.TypeSystem.getWildcard(TypeSystem.java:424)
+	at org.eclipse.jdt.internal.compiler.lookup.AnnotatableTypeSystem.getWildcard(AnnotatableTypeSystem.java:210)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeFromVariantTypeSignature(LookupEnvironment.java:2125)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeArgumentsFromSignature(LookupEnvironment.java:1754)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.getTypeFromTypeSignature(LookupEnvironment.java:2044)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.createMethod(BinaryTypeBinding.java:885)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.createMethods(BinaryTypeBinding.java:1021)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.cachePartsFrom(BinaryTypeBinding.java:570)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1063)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createBinaryTypeFrom(LookupEnvironment.java:1044)
+	at org.eclipse.jdt.internal.compiler.Compiler.accept(Compiler.java:318)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.askForType(LookupEnvironment.java:259)
+	at org.eclipse.jdt.internal.compiler.lookup.UnresolvedReferenceBinding.resolve(UnresolvedReferenceBinding.java:114)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveType(BinaryTypeBinding.java:248)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.resolveTypesFor(BinaryTypeBinding.java:1709)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.methods(BinaryTypeBinding.java:1646)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.initializeMembers(JDTClassNode.java:220)
+	... 35 more
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-06 15:03:45.050
+!MESSAGE Groovy-Eclipse Type Inferencing: Error visiting method ConsistencyAnalysis in class ConsistencyAnalysis
+!STACK 0
+java.lang.NullPointerException
+	at org.eclipse.jdt.internal.compiler.lookup.TypeSystem.getParameterizedType(TypeSystem.java:337)
+	at org.eclipse.jdt.internal.compiler.lookup.AnnotatableTypeSystem.getParameterizedType(AnnotatableTypeSystem.java:128)
+	at org.eclipse.jdt.internal.compiler.lookup.LookupEnvironment.createParameterizedType(LookupEnvironment.java:1376)
+	at org.eclipse.jdt.internal.compiler.lookup.Scope$Substitutor.substitute(Scope.java:605)
+	at org.eclipse.jdt.internal.compiler.lookup.Scope$Substitutor.substitute(Scope.java:552)
+	at org.eclipse.jdt.internal.compiler.lookup.Scope.substitute(Scope.java:515)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.superInterfaces(ParameterizedTypeBinding.java:1474)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superInterfaces(BinaryTypeBinding.java:2226)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.superInterfaces(ParameterizedTypeBinding.java:1474)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superclass(BinaryTypeBinding.java:2137)
+	at org.eclipse.jdt.internal.compiler.lookup.ParameterizedTypeBinding.superclass(ParameterizedTypeBinding.java:1456)
+	at org.eclipse.jdt.internal.compiler.lookup.BinaryTypeBinding.superclass(BinaryTypeBinding.java:2136)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.lazyClassInit(JDTClassNode.java:167)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1533)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTClassNode.getAnnotations(JDTClassNode.java:504)
+	at org.codehaus.groovy.ast.ClassNode.getAnnotations(ClassNode.java:1532)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:68)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FindAnnotationPointcut.explodeObject(FindAnnotationPointcut.java:47)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.FilteringPointcut.matches(FilteringPointcut.java:48)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.AbstractPointcut.matchOnPointcutArgument(AbstractPointcut.java:124)
+	at org.codehaus.groovy.eclipse.dsl.pointcuts.impl.CurrentTypePointcut.matches(CurrentTypePointcut.java:64)
+	at org.codehaus.groovy.eclipse.dsl.DSLDStore.findContributions(DSLDStore.java:146)
+	at org.codehaus.groovy.eclipse.dsl.lookup.DSLDTypeLookup.lookupTypeAndDeclaration(DSLDTypeLookup.java:86)
+	at org.eclipse.jdt.groovy.search.AbstractSimplifiedTypeLookup.lookupType(AbstractSimplifiedTypeLookup.java:144)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.lookupExpressionType(TypeInferencingVisitorWithRequestor.java:2669)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1963)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.handleSimpleExpression(TypeInferencingVisitorWithRequestor.java:1968)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorCallExpression(TypeInferencingVisitorWithRequestor.java:989)
+	at org.codehaus.groovy.ast.expr.ConstructorCallExpression.visit(ConstructorCallExpression.java:44)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitBinaryExpression(TypeInferencingVisitorWithRequestor.java:759)
+	at org.codehaus.groovy.ast.expr.BinaryExpression.visit(BinaryExpression.java:58)
+	at org.codehaus.groovy.ast.CodeVisitorSupport.visitExpressionStatement(CodeVisitorSupport.java:117)
+	at org.codehaus.groovy.ast.ClassCodeVisitorSupport.visitExpressionStatement(ClassCodeVisitorSupport.java:252)
+	at org.codehaus.groovy.ast.stmt.ExpressionStatement.visit(ExpressionStatement.java:40)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitConstructorOrMethod(TypeInferencingVisitorWithRequestor.java:1092)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitMethodInternal(TypeInferencingVisitorWithRequestor.java:658)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:466)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitJDT(TypeInferencingVisitorWithRequestor.java:375)
+	at org.eclipse.jdt.groovy.search.TypeInferencingVisitorWithRequestor.visitCompilationUnit(TypeInferencingVisitorWithRequestor.java:255)
+	at org.codehaus.groovy.eclipse.codebrowsing.requestor.CodeSelectHelper.selectASTNode(CodeSelectHelper.java:130)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.initialize(GroovyOccurrencesFinder.java:164)
+	at org.codehaus.groovy.eclipse.search.GroovyOccurrencesFinder.findOccurrences(GroovyOccurrencesFinder.java:193)
+	at org.codehaus.groovy.eclipse.editor.GroovyEditor.updateOccurrenceAnnotations(GroovyEditor.java:1314)
+	at org.eclipse.jdt.internal.ui.javaeditor.JavaEditor$6.selectionChanged(JavaEditor.java:3383)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup.calculateASTandInform(SelectionListenerWithASTManager.java:184)
+	at org.eclipse.jdt.internal.ui.viewsupport.SelectionListenerWithASTManager$PartListenerGroup$3.run(SelectionListenerWithASTManager.java:160)
+	at org.eclipse.core.internal.jobs.Worker.run(Worker.java:63)
+!SESSION 2020-08-07 11:11:14.956 -----------------------------------------------
+eclipse.buildId=4.16.0.I20200604-0540
+java.version=1.8.0_261
+java.vendor=Oracle Corporation
+BootLoader constants: OS=win32, ARCH=x86_64, WS=win32, NL=en_US
+Framework arguments:  -product org.eclipse.epp.package.java.product
+Command-line arguments:  -os win32 -ws win32 -arch x86_64 -product org.eclipse.epp.package.java.product
+
+!ENTRY org.eclipse.jface 2 0 2020-08-07 11:13:22.636
+!MESSAGE Keybinding conflicts occurred.  They may interfere with normal accelerator operation.
+!SUBENTRY 1 org.eclipse.jface 2 0 2020-08-07 11:13:22.636
+!MESSAGE A conflict occurred for CTRL+SHIFT+T:
+Binding(CTRL+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.jdt.ui.navigate.open.type,Open Type,
+		Open a type in a Java editor,
+		Category(org.eclipse.ui.category.navigate,Navigate,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@1fe05fff,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+Binding(CTRL+SHIFT+T,
+	ParameterizedCommand(Command(org.eclipse.lsp4e.symbolinworkspace,Go to Symbol in Workspace,
+		,
+		Category(org.eclipse.lsp4e.category,Language Servers,null,true),
+		org.eclipse.ui.internal.WorkbenchHandlerServiceHandler@6e017950,
+		,,true),null),
+	org.eclipse.ui.defaultAcceleratorConfiguration,
+	org.eclipse.ui.contexts.window,,,system)
+
+!ENTRY org.eclipse.egit.ui 2 0 2020-08-07 11:13:45.579
+!MESSAGE Warning: The environment variable HOME is not set. The following directory will be used to store the Git
+user global configuration and to define the default location to store repositories: 'C:\Users\AtlasKaan'. If this is
+not correct please set the HOME environment variable and restart Eclipse. Otherwise Git for Windows and
+EGit might behave differently since they see different configuration options.
+This warning can be switched off on the Team > Git > Confirmations and Warnings preference page.

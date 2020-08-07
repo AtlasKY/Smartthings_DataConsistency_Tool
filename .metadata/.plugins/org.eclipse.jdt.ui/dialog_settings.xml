@@ -16,4 +16,10 @@
 	<section name="OptionalMessageDialog.hide.">
 		<item key="org.eclipse.jdt.ui.typecomment.deprecated" value="true"/>
 	</section>
+	<section name="JavaElementSearchActions">
+	</section>
+	<section name="NewClassWizardPage">
+		<item key="create_constructor" value="false"/>
+		<item key="create_unimplemented" value="false"/>
+	</section>
 </section>

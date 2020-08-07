@@ -58,6 +58,14 @@ class CTAnalysisAST extends CompilationCustomizer{
 			 
 	}
 	
+	List getHandlers() {
+		return handlers
+	}
+	
+	List getDevices() {
+		return devices
+	}
+	
 	@Override
 	void call(SourceUnit source, GeneratorContext context, ClassNode classNode) {
 		
@@ -174,7 +182,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 			hdl.args.each { a-> 
 				if(est.getText().contains(a)) {
 					String txt = est.getText()
-					println txt
+				//	println txt
 					mods += "e-" + a + "."
 					def i = txt.indexOf(a) + a.length() + 1
 					while(i<txt.size() && !(txt.getAt(i)== " " || txt.getAt(i)== "=" || txt.getAt(i)== "!")){
@@ -182,7 +190,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 						i++
 					}
 					mods += "|-"
-					println mods
+				//	println mods
 				}
 			}
 			

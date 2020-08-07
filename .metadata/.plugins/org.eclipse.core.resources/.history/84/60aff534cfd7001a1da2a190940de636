@@ -1,0 +1,54 @@
+
+import org.codehaus.groovy.ast.ClassNode
+import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.control.CompilePhase
+import org.codehaus.groovy.control.CompilerConfiguration
+
+class ConsistencyAnalysis {
+	
+	List handlers
+	List devices
+	
+	public ConsistencyAnalysis(List hdls, List devs) {
+		
+		handlers = new ArrayList()
+		handlers = hdls
+		
+		devices = new ArrayList()
+		devices = devs
+		
+	}
+	
+	void analyse() {
+		
+	}
+	
+	void singleHandlerAnalysis() {
+		
+	}
+	
+	void crossHandlerAnalysis() {
+		
+	}
+	
+	//An object to store the result of the analysis
+	//The handlers involved hdl1 and hdl2
+	//The issues come across
+	class AnalysisResult{
+		
+		Handler hdl1
+		Handler hdl2
+		
+		
+		
+		public AnalysisResult(Handler h1, Handler h2) {
+			
+			hdl1 = h1
+			hdl2 = h2
+			
+		}
+		
+		
+	}
+	
+}
