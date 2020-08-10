@@ -24,10 +24,11 @@ class CTAnalysisDriver {
 		File dir = new File(code_dir).eachFile { file ->			
 			//Single file check
 			if(file.getName().contains("Shades")) {
+				
+				CTAnalysisAST ctal = new CTAnalysisAST()
+				
 				try {
 					CompilerConfiguration cc = new CompilerConfiguration(CompilerConfiguration.DEFAULT)
-					
-					CTAnalysisAST ctal = new CTAnalysisAST()
 					
 					cc.addCompilationCustomizers(ctal)
 					
@@ -36,12 +37,12 @@ class CTAnalysisDriver {
 					println "\n\n********************************************************************"
 					println("\nAnalysing " + file.getName() + ":")
 					
-						gshell.evaluate(file)
+					gshell.evaluate(file)
 					
 					println("Analysis Done!")
 					
 				}catch(MissingMethodException mme)
-				{
+				{	
 					def missingMethod = mme.toString()
 					
 					println(mme.getArguments())
@@ -49,6 +50,11 @@ class CTAnalysisDriver {
 					if(!missingMethod.contains("definition()"))
 						println("missing method: " + missingMethod)
 				}
+				ConsistencyAnalysis conAn = new ConsistencyAnalysis(ctal.getHandlers())
+				
+				conAn.analyse()
+				
+				conAn.print()
 			}
 		}
 		

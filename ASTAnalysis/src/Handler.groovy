@@ -106,14 +106,43 @@ class Handler{
 		eventTriggers.add(evt)
 	}
 	
-	void addReadState(String s) {
-		if(!readStates.contains(s))
-			readStates.add(s)
+	void addReadState(String s, String pth) {
+		State st = new State(s, pth)
+		
+		if(readStates.size()>0) {
+			boolean hasSt = false
+			//if has the same path state object then not add
+			//but if it doesn't have it then add
+			readStates.each { rs->
+				if(!hasSt)
+					hasSt = rs.equals(st, true)
+			}
+			
+			if(!hasSt) {
+				readStates.add(st)
+			}
+		} else {
+			readStates.add(st)
+		}
 	}
 	
-	void addWriteState(String s) {
-		if(!writeStates.contains(s))
-			writeStates.add(s)
+	void addWriteState(String s, String pth) {
+		State st = new State(s, pth)
+		if(writeStates.size()>0) {
+			boolean hasSt = false
+			//if has the same path state object then not add
+			//but if it doesn't have it then add
+			writeStates.each { rs->
+				if(!hasSt)
+					hasSt = rs.equals(st, true)
+			}
+			
+			if(!hasSt) {
+				writeStates.add(st)
+			}
+		} else {
+			writeStates.add(st)
+		}
 	}
 	
 	void addDevAcc(String s) {
@@ -324,6 +353,8 @@ class Handler{
 		 msg + tAcc + devMeth + stMeth + "\n"
 	}
 	
+	
+	
 	class Method{
 		
 		String receiver
@@ -509,5 +540,39 @@ class Handler{
 			return st
 		}
 		
+	}
+	
+	//TODO: store the value that will be written
+	//TODO: store the type of the expression of the set values
+	class State{
+		
+		String state
+		String path
+		
+		public State(String s, String p) {
+			 state = s
+			 path = p
+		}
+		
+		@Override
+		boolean equals(Object o) {
+			if(o instanceof State) {
+				return this.state.equals(o.state)
+			} else
+				return false
+		}
+		
+		boolean equals(Object o, boolean checkPath) {
+			if(checkPath) {
+				return this.state.equals(o.state) && this.path.equals(o.path)
+			}else {
+				return this.equals(o)
+			}
+		}
+		
+		@Override
+		String toString() {
+			return state
+		}
 	}
 }

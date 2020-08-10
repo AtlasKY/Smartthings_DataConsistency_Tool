@@ -66,6 +66,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 		return devices
 	}
 	
+	
+	//TODO: Find the bug shadescontrol.groovy :c
 	@Override
 	void call(SourceUnit source, GeneratorContext context, ClassNode classNode) {
 		
@@ -81,6 +83,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 		
 		//print out a summary of the data structures
 		summary()
+		
+//		ConsistencyAnalysis conAn = new ConsistencyAnalysis(getHandlers())
+//		
+//		conAn.analyse()
+//		
+//		conAn.print()
 	}
 	
 	//a methodCall visitor helper
@@ -98,7 +106,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//b: boolean expression
 		//bl: binary leftside exp
 		//br: binary rightside exp
-		//s: scheduled execution
+		//so: scheduled overwrite truef
+		//sf: scheduled overwrite false
 		//d: + device name
 		def pathLog 
 		
@@ -167,10 +176,13 @@ class CTAnalysisAST extends CompilationCustomizer{
 		else if(st instanceof IfStatement) {
 			def mods = ""
 			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
-			stateRecurse(est, hdl, cn, pth)//boolean block
+			stateRecurse(est, hdl, cn, pth + "b:")//boolean block
 			
-			if(st.getElseBlock().isEmpty())
+			if(st.getElseBlock().isEmpty()) {
 				mods += "i-"
+			} else {
+				mods += "el-"
+			}
 			
 			if(est.getText().contains("now") || est.getText().contains("time"))	
 				mods += "t-"
@@ -265,16 +277,18 @@ class CTAnalysisAST extends CompilationCustomizer{
 					hdl.addTimAcc(exp.getText())
 				}
 				
+				
+				String mtext = exp.getMethodAsString().toLowerCase()
 				//check for scheduling that uses predefined methodcalls
-				if(exp.getText().toLowerCase().contains("runin") || exp.getText().toLowerCase().contains("schedule") 
-					|| exp.getText().toLowerCase().contains("runonce") || exp.getText().toLowerCase().contains("runevery")) {
+				if(mtext.contains("runin") || (mtext.contains("schedule") && !mtext.contains("unschedule") )
+					|| mtext.contains("runonce") || mtext.contains("runevery")) {
 					//get the argument that contains the name of the method scheduled for execution
 					String schMeth = ""
 //					println exp
-					if(!exp.getText().toLowerCase().contains("runevery")) {
-						schMeth = exp.getArguments().getAt(1).getText()
-					} else {
+					if(mtext.contains("runevery")) {
 						schMeth = exp.getArguments().getAt(0).getText()
+					} else {
+						schMeth = exp.getArguments().getAt(1).getText()
 					}
 					
 					//find the declared method within the code and get the method node
@@ -290,8 +304,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 							new ArgumentListExpression(mn.getParameters())))
 					
 //					println "Path " + pth
-					
-					stateRecurse(ext, hdl, cn, pth + "s:")
+					if(hdl.schOverWrite) {
+						stateRecurse(ext, hdl, cn, pth + "so:")
+					} else {
+						stateRecurse(ext, hdl, cn, pth + "sf:")
+					}
 				}
 				
 				//check for notification/sms sending functions, set the flag for message usage on the handler
@@ -360,11 +377,27 @@ class CTAnalysisAST extends CompilationCustomizer{
 				//if the left side contains state, then it is an assignment to the state variable
 				//add it as a write to state
 				if(lex.text.contains("state.") && !pth.contains("br:")) {
-					hdl.addWriteState(exp.getLeftExpression().getText())
+					
+					//if the binary op is a checking operation with state on the left side add to read states
+					if(exp.getOperation().getText().contains("==") || exp.getOperation().getText().contains("<")
+						|| exp.getOperation().getText().contains(">") || exp.getOperation().getText().contains("!")) {
+						
+						hdl.addReadState(exp.getLeftExpression().getText(), pth + "bl:")
+					}
+					else {
+						//check for the expression type of the assigned value
+						//cont = constant value
+						//var = variable value
+						def assignType = exp.getRightExpression() instanceof ConstantExpression ? "cont" : "var"
+						hdl.addWriteState(exp.getLeftExpression().getText(), pth + "bl:" + assignType)
+					}
 				}
+				
+				
+				
 				//if state is on the right, then it is a read on state
 				if(rex.text.contains("state.")) {
-					hdl.addReadState(exp.getRightExpression().getText())
+					hdl.addReadState(exp.getRightExpression().getText(), pth + "br:")
 				}
 				
 				//recurse analyze right epxression	
@@ -396,7 +429,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 			}
 			else if(exp instanceof PropertyExpression) {
 				if(exp.getText().contains("state.") && !pth.contains("bl:")) {
-					hdl.addReadState(exp.getText())
+					hdl.addReadState(exp.getText(), pth)
 				}
 			}
 		}
