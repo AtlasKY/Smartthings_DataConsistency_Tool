@@ -126,8 +126,9 @@ class Handler{
 		}
 	}
 	
-	void addWriteState(String s, String pth) {
+	void addWriteState(String s, String pth, Expression exp) {
 		State st = new State(s, pth)
+		st.setWrite(exp)
 		if(writeStates.size()>0) {
 			boolean hasSt = false
 			//if has the same path state object then not add
@@ -434,7 +435,7 @@ class Handler{
 //				println "Method: " + method
 //				println "CAllPath " + callPath
 				p = callPath.substring(ind-3, ind)
-//				println "P: " + p
+//				println "Pth: " + p
 				if(p.contains("t-")) {
 					condPar += "time-info:"
 					ind+=2
@@ -447,8 +448,9 @@ class Handler{
 //					sleep(1000)
 					condPar += "evt-info("
 					p = callPath.substring(ind-3)
-//					println "P: " + p
-					def i = p.indexOf("e-", ind-3) + 2
+//					println "Pevt: " + p
+					def i = (p.indexOf("e-") + 2)
+//					println "i: " + i
 					def evt = ""
 					while(i < p.length() && p.getAt(i)!="|") {
 						evt += p.getAt(i)
@@ -457,9 +459,9 @@ class Handler{
 					}
 					evtVal.add(evt)
 					condPar += evt + "):"
-//					println ind + " " + i
+//					println "Ind: " + ind + " i: " + i
 //					println condPar
-					ind = i + 5
+					ind += i
 //					println ind + " " + i
 				}
 				else if(p.contains("i-")) {
@@ -542,16 +544,28 @@ class Handler{
 		
 	}
 	
-	//TODO: store the value that will be written
-	//TODO: store the type of the expression of the set values
 	class State{
 		
 		String state
 		String path
 		
+		String writeVal
+		Expression writeExp
+		boolean isWrite
+		
+		
 		public State(String s, String p) {
 			 state = s
 			 path = p
+			 isWrite = false
+			 writeVal = ""
+			 writeExp = null
+		}
+		
+		void setWrite(Expression exp) {
+			isWrite = true
+			writeVal = exp.getText()
+			writeExp = exp
 		}
 		
 		@Override

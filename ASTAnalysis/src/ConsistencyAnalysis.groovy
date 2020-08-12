@@ -2,6 +2,7 @@
 import Handler.State
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.builder.AstBuilder
+import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.CompilerConfiguration
 
@@ -11,6 +12,12 @@ class ConsistencyAnalysis {
 	
 	List results
 	
+	List unsafeResults
+	
+	boolean DEBUG = false
+	boolean LONG_OUT = false
+	
+	//enum for the state result information passing and recording
 	enum StateRes{
 		NO_STATE,
 		SAFE_READ,
@@ -21,12 +28,27 @@ class ConsistencyAnalysis {
 		UNSAFE_RW
 	}
 	
+	//an enum for the scheduling check for state accesses
+	enum Schedule{
+		OW_TRUE,
+		OW_FALSE,
+		NO_SCH
+	}
+	
+	//Enum for the state write flag checks in writeCount() method
+	enum StateWFlag{
+		SINGLE,
+		MULTI_W_SAME_VAL,
+		MULTI_W_DIFF_VAL
+	}
+	
 	public ConsistencyAnalysis(List hdls) {
 		
 		handlers = new ArrayList()
 		handlers = hdls
 		
 		results = new ArrayList<AnalysisResult>()
+		unsafeResults = new ArrayList<AnalysisResult>()
 		
 	}
 	
@@ -38,24 +60,42 @@ class ConsistencyAnalysis {
 			
 			for(int j = i; j < handlers.size(); j++) {
 				
-				println "Handlers: " + handlers.get(i).name + " " + handlers.get(j).name
+				if(DEBUG) println "Handlers: " + handlers.get(i).name + " " + handlers.get(j).name
 				
 				//starts by calling the handler crossed with itself
-				results.add(analysisHelper(handlers.get(i), handlers.get(j)))
-				
+				AnalysisResult ar = analysisHelper(handlers.get(i), handlers.get(j))
+				results.add(ar)
+				if(!ar.isSafe)
+					unsafeResults.add(ar)
+
 			}	
 		}
 	}
 	
 	void print() {
 		
-		println ""
+		if(LONG_OUT) {
+		println "\n-----------SAFE--STATE--CASES-----------\n"
 		
-		results.each { res->
-			println res
+			results.each { res->
+				if(res.isSafe)
+					println res
+			}
+		}
+		
+		if(unsafeResults.size()>0) {
+			println "\n----------UNSAFE--STATE--CASES----------\n"
+			unsafeResults.each { res->
+				println res
+			}
+		} else {
+			println "\n--------NO--UNSAFE--STATE--CASES----------\n"
 		}
 	}
 	
+	//TODO: check the output validity for Hall Light Welcome application
+	//returns false positive when modifying different states and says writes to the same field
+	//the error should be writing variable information to the state field
 	AnalysisResult analysisHelper(Handler h1, Handler h2) {
 		
 		AnalysisResult ar = new AnalysisResult(h1, h2)
@@ -63,8 +103,6 @@ class ConsistencyAnalysis {
 		ar = stateAnalysis(ar, h1, h2)
 		
 //		ar = userImpactAnalysis(ar, h1, h2)
-		
-//		ar = devModAnalysis(ar, h1, h2)
 		
 		return ar
 	}
@@ -98,7 +136,8 @@ class ConsistencyAnalysis {
 		if((s1 == StateRes.SAFE_WRITE || s1 == StateRes.SAFE_RW)) {
 			h1.writeStates.each { ws->
 			//	println ws.path + " " + ws
-				if(!stateReadHelper(h2 ,ws)) {
+				ar = stateWriteHelper(ar, h2 ,ws)
+				if(!ar.flag) {
 								
 					//set the state results to unsafe
 					if(s1 == StateRes.SAFE_WRITE)
@@ -113,7 +152,8 @@ class ConsistencyAnalysis {
 				}
 				
 				if(s2 == StateRes.SAFE_WRITE || s2 == StateRes.SAFE_RW) {
-					if(!stateWriteHelper(h2, ws)) {
+					ar = stateWriteHelper(ar, h2 ,ws)
+					if(!ar.flag) {
 						
 						//println "state write helper passed false\n"
 						//set the state results to unsafe
@@ -134,8 +174,8 @@ class ConsistencyAnalysis {
 		//Repeat of the above check for 2nd handler
 		if((s2 == StateRes.SAFE_WRITE || s2 == StateRes.SAFE_RW)) {
 			h2.writeStates.each { ws->
-				
-				if(!stateReadHelper(h1 ,ws)) {
+				ar = stateReadHelper(ar, h1 ,ws)
+				if(!ar.flag) {
 							
 					//set the state results to unsafe
 					if(s2 == StateRes.SAFE_WRITE)
@@ -149,7 +189,8 @@ class ConsistencyAnalysis {
 						s1 = StateRes.UNSAFE_RW
 				}
 				if(s1 == StateRes.SAFE_WRITE || s1 == StateRes.SAFE_RW) {
-					if(!stateWriteHelper(h2, ws)) {
+					ar = stateWriteHelper(ar, h1 ,ws)
+					if(!ar.flag) {
 					//	println "state write helper passed false\n"
 						//set the state results to unsafe
 						if(s2 == StateRes.SAFE_WRITE)
@@ -175,12 +216,12 @@ class ConsistencyAnalysis {
 	
 	//checks for a given write state variable and the crossed handler's read states
 	//return true if determined safe
-	boolean stateReadHelper(Handler h, State st) {
+	AnalysisResult stateReadHelper(AnalysisResult ar, Handler h, State st) {
 		
 		//if there are read states in the handler
 		//cycle over each of them and check if modify the same state field
 		
-		boolean ret = true
+		ar.flag = true
 		
 		//no read state is safe for write
 		if(h.readStates.size()>0) {
@@ -195,35 +236,48 @@ class ConsistencyAnalysis {
 					
 					//If it is not a safely scheduled write then check
 					//if schedule is safe then safe
-					if(stateSchSafe(st) == 2) {
+					if(stateSchSafe(st) == Schedule.NO_SCH) {
 						
 						//does it have more than one unscheduled write to the same field
-						if(writeCount(h, st) == 1) {
+						if(writeCount(h, st) != StateWFlag.MULTI_W_DIFF_VAL) {
 							
 							//if it is a constant value that is set to the field
 							//return safe
-							if(!st.getPath().contains(":cont")) {
-								ret = false//not safe with variable modifications
+							if(!st.writeExp instanceof ConstantExpression) {
+								ar.isSafe = false
+								ar.flag = false//not safe with variable modifications
+								ar.varSetFlag = true //check the variable set to state field flag
 							}
 						} else {
-							ret = false //not safe with multiple unscheduled modifications
+							ar.isSafe = false
+							ar.flag = false //not safe with multiple unscheduled modifications
+							ar.multModsFlag = true //check the multipl modification flag
 						}
-					} else if(stateSchSafe(st) == 1) {
+					} else if(stateSchSafe(st) == Schedule.OW_FALSE) {
 						//if unsafe scheduling
-						ret = false
+						ar.flag = false
+						ar.isSafe = false
+						ar.schFlag = true //check the no overwrite scheduling flag
+					}
+					
+					if(timeCheck(st)) {
+						//if inside a time dependent conditional block
+						ar.flag = false
+						ar.timeCondFlag = true
+						ar.isSafe = false
 					}
 				} 
 			}
 		} 
 		
-		return ret
+		return ar
 	}
 	
-	boolean stateWriteHelper(Handler h, State st) {
+	AnalysisResult stateWriteHelper(AnalysisResult ar, Handler h, State st) {
 		//if there are read states in the handler
 		//cycle over each of them and check if modify the same state field
 		
-		boolean ret = true
+		ar.flag = true
 			
 		h.writeStates.each { ws->
 		
@@ -235,58 +289,100 @@ class ConsistencyAnalysis {
 				
 				//If it is not a safely scheduled write then check
 				//if schedule is safe then safe
-				if(stateSchSafe(st) != 0) {
+				if(stateSchSafe(st) == Schedule.NO_SCH) {
 					
 					//does it have more than one unscheduled write to the same field
-					if(writeCount(h, st) == 1) {
+					if(writeCount(h, st) != StateWFlag.MULTI_W_DIFF_VAL) {
 						
+						if(DEBUG) {
+							println "State: " + st + " " + st.writeVal
+							println "State Exp: " + st.writeExp
+							println !(st.writeExp instanceof ConstantExpression)
+						}
 						//if it is a constant value that is set to the field
 						//return safe
-						if(!st.getPath().contains(":cont")) {
-							ret = false//not safe with variable modifications
+						if(!(st.writeExp instanceof ConstantExpression)) {
+							ar.flag = false//not safe with variable modifications
+							ar.varSetFlag = true //check the variable set to state field flag
+							ar.isSafe = false
 						}
-					} else {
-						ret = false //not safe with multiple unscheduled modifications
+					} 
+					else {
+						ar.flag = false //not safe with multiple unscheduled modifications
+						ar.multModsFlag = true //check the multipl modification flag
+						ar.isSafe = false
 					}
+				} else if(stateSchSafe(st) == Schedule.OW_FALSE) {
+					//if unsafe scheduling
+					ar.flag = false
+					ar.isSafe = false
+					ar.schFlag = true //check the no overwrite scheduling flag
 				} 
+				
+				if(timeCheck(st)) {
+					//if inside a time dependent conditional block
+					ar.flag = false
+					ar.isSafe = false
+					ar.timeCondFlag = true
+				}
+				
 			} 
 		}
 		
-		return ret
+		return ar
 	}
 	
-	//return the number of write states with the same state field access as s
-	//returns 1 for a single unscheduled write of the same field
-	int writeCount(Handler h, State s) {
+	//If there are multiple accesses to the same field but they all set the same value, 
+	//then fine as no race condition happens
+	//returns a StateWFlag enum
+	StateWFlag writeCount(Handler h, State s) {
 		
+		//number of writes to the state field
 		int i = 0
 		
+		//if all the writes are same value setting if multiple writes happens
+		//to the same field
+		boolean sameVal = true
+		
 		h.writeStates.each { ws ->
-			if(s.equals(ws))
-				if(stateSchSafe(ws) == 2)
+			if(s.equals(ws)) {
+				if(stateSchSafe(ws) == Schedule.NO_SCH)
 					i++
+				if(s.writeVal.equals(ws.writeVal))
+					sameVal = false
+			}
 		}
 //		println "Write Count: " + i + " " + s
-		return i
+		if(i == 1)
+			return StateWFlag.SINGLE
+		else if(i > 1 && sameVal)
+			return StateWFlag.MULTI_W_SAME_VAL
+		else
+			return StateWFlag.MULTI_W_DIFF_VAL 	
+		
 	}
-	
-	//TODO: add a check for the values written to the state fields
-	
-	//TODO: add a helper for state time conditional checks
-	
-	//TODO: CREATE AN ENUM FOR THIS METHOD!!!!
+		
+	//Returns true if the state is inside a time related conditional
+	//false if not
+	boolean timeCheck(State st) {
+		if(st.getPath().contains("t-")) {
+			return true
+		} else {
+			return false
+		}
+	}
 	
 	//return 0 if safe scheduler with overwrite
 	//return 1 if unsafe no overwrite scheduling
 	//return 2 if no scheduling
-	int stateSchSafe(State s) {
+	Schedule stateSchSafe(State s) {
 		
 		if(s.path.contains("so:")) {
-			return 0 //safe overwrite scheduler
+			return Schedule.OW_TRUE //safe overwrite scheduler
 		} else if(s.path.contains("sf:")) {
-			return 1 //unsafe no overwrite scheduler
+			return Schedule.OW_FALSE //unsafe no overwrite scheduler
 		} else {
-			return 2 //no scheduler
+			return Schedule.NO_SCH //no scheduler
 		}
 		
 	}
@@ -307,6 +403,18 @@ class ConsistencyAnalysis {
 		Handler hdl1
 		Handler hdl2
 		
+		//boolean flag to use during checks and keep the modifications
+		//to other flag instances consistent within the object
+		boolean flag
+		
+		boolean isSafe
+		
+		//Output flags
+		boolean schFlag //schedule overwrite false flag 
+		boolean multModsFlag //multiple modification of the same field flag
+		boolean varSetFlag //a variable is set to the state field
+		boolean timeCondFlag //a time conditional modification of the state field
+		
 		int stateMod
 		int usrImp
 		int deviceMod
@@ -318,11 +426,16 @@ class ConsistencyAnalysis {
 			hdl1 = h1
 			hdl2 = h2
 			result = ""
+			flag = true
+			schFlag = false
+			multModsFlag = false
+			varSetFlag = false
+			timeCondFlag = false
 			
+			isSafe = true
 		}
 		
 		
-		//TODO: Add more information to the prints/outcomes
 		void stateRes(StateRes h1, StateRes h2) {
 			
 			//println "stateRes: " + h1 + " " + h2
@@ -362,7 +475,7 @@ class ConsistencyAnalysis {
 				result += "\n"
 				switch(h2) {
 					case StateRes.NO_STATE:
-						result += "Handler 2 does not use state\n"
+						result += "Handler 2 does not use state"
 						break;
 					case StateRes.SAFE_READ:
 						result += "Handler 2 " + hdl2.name + " reads state variables "
@@ -382,6 +495,7 @@ class ConsistencyAnalysis {
 				result += "\n"
 			} else {
 				result += "POSES STATE CONSISTENCY RISKS!\n"
+				result += flagChecks()
 				switch(h1) {
 					case StateRes.UNSAFE_R:
 						result += "Handler 1 " + hdl1.name + " reads state variables "
@@ -417,6 +531,23 @@ class ConsistencyAnalysis {
 				}
 				result += "\n"
 			}
+		}
+		
+		String flagChecks() {
+			String str = ""
+			if(schFlag) {
+				str += "Schedule Overwrite is set to false! Queued execution of modifications!\n"
+			}
+			if(multModsFlag) {
+				str += "Multiple unscheduled writes to the same state field!\n"
+			}
+			if(varSetFlag) {
+				str += "A variable value is set to a state field, might pose inconsistency risks!\n"
+			}
+			if(timeCondFlag) {
+				str += "The modification is inside a conditional block that is dependent on time information.\n"
+			}
+			return str
 		}
 		
 		String readHelper(Handler h) {

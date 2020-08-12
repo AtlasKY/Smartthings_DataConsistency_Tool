@@ -23,7 +23,7 @@ class CTAnalysisDriver {
 		
 		File dir = new File(code_dir).eachFile { file ->			
 			//Single file check
-			if(file.getName().contains("Shades")) {
+			if(file.getName().contains("")) {
 				
 				CTAnalysisAST ctal = new CTAnalysisAST()
 				
