@@ -400,7 +400,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					if(exp.getOperation().getText().contains("==") || exp.getOperation().getText().contains("<")
 						|| exp.getOperation().getText().contains(">") || exp.getOperation().getText().contains("!")) {
 						
-						hdl.addReadState(exp.getLeftExpression().getText(), pth + "bl:")
+						hdl.addReadState(exp.getLeftExpression().getText(), pth + "bl:", exp.getRightExpression())
 					}
 					else {
 						//check for the expression type of the assigned value
@@ -415,7 +415,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 				//if state is on the right, then it is a read on state
 				if(rex.text.contains("state.")) {
-					hdl.addReadState(exp.getRightExpression().getText(), pth + "br:")
+					if(exp.getOperation().getText().contains("==") || exp.getOperation().getText().contains("<")
+						|| exp.getOperation().getText().contains(">") || exp.getOperation().getText().contains("!")) {
+						hdl.addReadState(exp.getRightExpression().getText(), pth + "br:", exp.getLeftExpression())
+					}else {
+						hdl.addReadState(exp.getRightExpression().getText(), pth + "br:")
+					}
 				}
 				
 				//recurse analyze right epxression	

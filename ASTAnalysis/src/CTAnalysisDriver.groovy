@@ -9,11 +9,13 @@ import org.codehaus.groovy.control.CompilerConfiguration
 
 class CTAnalysisDriver {
 	
-	static main(def args) {
+	public static void main(String[] args) {
 		 
 		def proj_root = "C:/Users/AtlasKaan/Desktop/EclipseASTWorkspace/ASTAnalysis"
 		
 		def code_dir = proj_root + "/groovyApps"
+		
+		//String fil = args[0]
 		
 		def demo_file = new File(code_dir + "/ShadesControl.groovy")
 		
@@ -23,7 +25,7 @@ class CTAnalysisDriver {
 		
 		File dir = new File(code_dir).eachFile { file ->			
 			//Single file check
-			if(file.getName().contains("")) {
+			if(file.getName().toLowerCase().contains("")) {
 				
 				CTAnalysisAST ctal = new CTAnalysisAST()
 				

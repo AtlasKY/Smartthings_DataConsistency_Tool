@@ -102,7 +102,7 @@ class ConsistencyAnalysis {
 		
 		ar = stateAnalysis(ar, h1, h2)
 		
-//		ar = userImpactAnalysis(ar, h1, h2)
+		ar = userImpactAnalysis(ar, h1, h2)
 		
 		return ar
 	}
@@ -238,21 +238,27 @@ class ConsistencyAnalysis {
 					//if schedule is safe then safe
 					if(stateSchSafe(st) == Schedule.NO_SCH) {
 						
-						//does it have more than one unscheduled write to the same field
-						if(writeCount(h, st) != StateWFlag.MULTI_W_DIFF_VAL) {
+							ar.readWriteFlag = true
 							
 							//if it is a constant value that is set to the field
 							//return safe
-							if(!st.writeExp instanceof ConstantExpression) {
+							if(!(st.writeExp instanceof ConstantExpression)) {
 								ar.isSafe = false
 								ar.flag = false//not safe with variable modifications
 								ar.varSetFlag = true //check the variable set to state field flag
 							}
-						} else {
-							ar.isSafe = false
-							ar.flag = false //not safe with multiple unscheduled modifications
-							ar.multModsFlag = true //check the multipl modification flag
-						}
+							
+							if(rs.boolRead) {
+								if(!(rs.readExp instanceof ConstantExpression)) {
+									if(rs.readExp.getText().contains("now") || rs.readExp.getText().contains("time")) {
+										//if inside a time dependent conditional block
+										ar.flag = false
+										ar.timeCondFlag = true
+										ar.isSafe = false
+									}
+								}
+							}
+							
 					} else if(stateSchSafe(st) == Schedule.OW_FALSE) {
 						//if unsafe scheduling
 						ar.flag = false
@@ -387,13 +393,45 @@ class ConsistencyAnalysis {
 		
 	}
 	
-	void userImpactAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
-		
+	
+	enum UImpact{
+		SAFE,
+		UNS_NOTIF,
+		UNS_DEVICE_MOD,
+		UNS_DEV_MOD_NOTIF
 	}
 	
-	void devModAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
+	//TODO: Write the user impact analysis
+	//TODO: Add flags to AnalysisResult to store the user impact consistency information
+	AnalysisResult userImpactAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
 		
+		
+		//if any of the two uses notifications
+		if(h1.hasMsg) {
+			ar = notifAnalysis(ar, h2)
+		}
+		if(h2.hasMsg) {
+			ar = notifAnalysis(ar, h2)
+		}
+		
+		//TODO: Check the path branching of the device modifications
+		//TODO: Check if the multiple different values are sent to the same device from the handlers
+		
+		
+		return ar
 	}
+	
+	
+	//Safe if the notifications are scheduled execution
+	AnalysisResult notifAnalysis(AnalysisResult ar, Handler h) {
+		
+		//TODO: Implement a check for the scheduling of message sending
+		//TODO: set a handler specific flag in AnalysisResult
+		//TODO: OR maybe store a flag inside the handler object for the scheduling of notification
+		
+		return ar
+	}
+
 	
 	//An object to store the result of the analysis
 	//The handlers involved hdl1 and hdl2
@@ -414,6 +452,7 @@ class ConsistencyAnalysis {
 		boolean multModsFlag //multiple modification of the same field flag
 		boolean varSetFlag //a variable is set to the state field
 		boolean timeCondFlag //a time conditional modification of the state field
+		boolean readWriteFlag //a flag for when the methods both rad and write to the same state field
 		
 		int stateMod
 		int usrImp
@@ -426,11 +465,14 @@ class ConsistencyAnalysis {
 			hdl1 = h1
 			hdl2 = h2
 			result = ""
+			
 			flag = true
+			
 			schFlag = false
 			multModsFlag = false
 			varSetFlag = false
 			timeCondFlag = false
+			readWriteFlag = false
 			
 			isSafe = true
 		}
@@ -547,6 +589,9 @@ class ConsistencyAnalysis {
 			if(timeCondFlag) {
 				str += "The modification is inside a conditional block that is dependent on time information.\n"
 			}
+			if(readWriteFlag) {
+				str += "One handler writes to a state field the other reads!\n"
+			}
 			return str
 		}
 		
@@ -559,7 +604,7 @@ class ConsistencyAnalysis {
 				
 				if(s.path.contains("so:") || s.path.contains("sf:"))
 					str += " schedule "
-					
+										
 				str += "" + s + "; "
 			}
 			

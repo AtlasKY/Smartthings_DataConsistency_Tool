@@ -1,4 +1,5 @@
 import org.codehaus.groovy.ast.expr.ArgumentListExpression
+import org.codehaus.groovy.ast.expr.BinaryExpression
 import org.codehaus.groovy.ast.expr.ClosureExpression
 import org.codehaus.groovy.ast.expr.Expression
 import org.codehaus.groovy.ast.expr.MethodCallExpression
@@ -107,7 +108,13 @@ class Handler{
 	}
 	
 	void addReadState(String s, String pth) {
+		addReadState(s, pth, null)
+	}
+	void addReadState(String s, String pth, Expression exp) {
 		State st = new State(s, pth)
+		
+		if(exp != null)
+			st.addBoolRead(exp)
 		
 		if(readStates.size()>0) {
 			boolean hasSt = false
@@ -553,19 +560,33 @@ class Handler{
 		Expression writeExp
 		boolean isWrite
 		
+		String boolVal
+		Expression readExp
+		boolean boolRead
 		
 		public State(String s, String p) {
 			 state = s
 			 path = p
+			 
 			 isWrite = false
 			 writeVal = ""
 			 writeExp = null
+			 
+			 boolRead = false
+			 boolVal = ""
+			 readExp = null
 		}
 		
 		void setWrite(Expression exp) {
 			isWrite = true
 			writeVal = exp.getText()
 			writeExp = exp
+		}
+		
+		void addBoolRead(Expression exp) {
+			boolRead = true
+			readExp = exp
+			boolVal = exp.getText()
 		}
 		
 		@Override
