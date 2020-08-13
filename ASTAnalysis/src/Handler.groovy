@@ -199,7 +199,7 @@ class Handler{
 		}
 		Method m = new Method(rec, mexp.getMethodAsString())
 		
-		if(path.contains("s:")) {
+		if(path.contains("so:")) {
 			m.setSch()
 		}
 		

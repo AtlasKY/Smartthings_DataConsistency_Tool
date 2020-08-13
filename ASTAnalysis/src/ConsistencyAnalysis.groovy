@@ -1,4 +1,5 @@
 
+import Handler.Method
 import Handler.State
 import org.codehaus.groovy.ast.ClassNode
 import org.codehaus.groovy.ast.builder.AstBuilder
@@ -74,8 +75,10 @@ class ConsistencyAnalysis {
 	
 	void print() {
 		
+		println "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
+		
 		if(LONG_OUT) {
-		println "\n-----------SAFE--STATE--CASES-----------\n"
+		println "\n_______________SAFE__CASES_______________\n"
 		
 			results.each { res->
 				if(res.isSafe)
@@ -84,12 +87,13 @@ class ConsistencyAnalysis {
 		}
 		
 		if(unsafeResults.size()>0) {
-			println "\n----------UNSAFE--STATE--CASES----------\n"
+			println "\n_______________UNSAFE__CASES_______________\n"
 			unsafeResults.each { res->
+				println "<><><><><><><>\n"
 				println res
 			}
 		} else {
-			println "\n--------NO--UNSAFE--STATE--CASES----------\n"
+			println "\n_______________NO__UNSAFE__CASES_______________\n"
 		}
 	}
 	
@@ -405,13 +409,16 @@ class ConsistencyAnalysis {
 	//TODO: Add flags to AnalysisResult to store the user impact consistency information
 	AnalysisResult userImpactAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
 		
-		
 		//if any of the two uses notifications
 		if(h1.hasMsg) {
-			ar = notifAnalysis(ar, h2)
+			ar = notifAnalysis(ar, h1, 1)
 		}
 		if(h2.hasMsg) {
-			ar = notifAnalysis(ar, h2)
+			ar = notifAnalysis(ar, h2, 2)
+		}
+		
+		h1.devMethods.each{ m ->
+			ar = devModAnalysis(ar, m)
 		}
 		
 		//TODO: Check the path branching of the device modifications
@@ -421,13 +428,27 @@ class ConsistencyAnalysis {
 		return ar
 	}
 	
+	AnalysisResult devModAnalysis(AnalysisResult ar, Method m) {
+		
+		println "Method: " + m.method + " pth: " + m.callPath
+		
+		return ar
+	}
+	
 	
 	//Safe if the notifications are scheduled execution
-	AnalysisResult notifAnalysis(AnalysisResult ar, Handler h) {
+	AnalysisResult notifAnalysis(AnalysisResult ar, Handler h, int hIndex) {
 		
-		//TODO: Implement a check for the scheduling of message sending
-		//TODO: set a handler specific flag in AnalysisResult
-		//TODO: OR maybe store a flag inside the handler object for the scheduling of notification
+		h.calledMethods.each{ m->
+			if(m.method.contains("sendNotif") || m.method.contains("sendSms") || m.method.contains("sendPush")) {
+				if(m.isSch) {
+					ar.setMsgFlags(hIndex, true)
+				}
+				else {
+					ar.setMsgFlags(hIndex, false)
+				}
+			}
+		}
 		
 		return ar
 	}
@@ -447,6 +468,11 @@ class ConsistencyAnalysis {
 		
 		boolean isSafe
 		
+		boolean h1Msg
+		boolean h1MsgSafe
+		boolean h2Msg
+		boolean h2MsgSafe
+		
 		//Output flags
 		boolean schFlag //schedule overwrite false flag 
 		boolean multModsFlag //multiple modification of the same field flag
@@ -459,14 +485,24 @@ class ConsistencyAnalysis {
 		int deviceMod
 		
 		String result
+		String stateStr
+		String usrImpStr
 		
 		public AnalysisResult(Handler h1, Handler h2) {
 			
 			hdl1 = h1
 			hdl2 = h2
 			result = ""
+			result += "Handler1: " + hdl1.name + " VS Handler2: " + hdl2.name + "\n"
+			stateStr = ""
+			usrImpStr = ""
 			
 			flag = true
+			
+			h1Msg = false
+			h1MsgSafe = false
+			h2Msg = false
+			h2MsgSafe = false
 			
 			schFlag = false
 			multModsFlag = false
@@ -477,105 +513,111 @@ class ConsistencyAnalysis {
 			isSafe = true
 		}
 		
-		
-		void stateRes(StateRes h1, StateRes h2) {
+		void setMsgFlags(int hdlIndex, boolean isSch) {
 			
-			//println "stateRes: " + h1 + " " + h2
-			
-			//0: no state usage
-			//1: safe read state only
-			//2: safe write state only
-			//3: safe read and write
-			//4: unsafe read state only
-			//5: unsafe write state only
-			//6: unsafe read and write
-			if(h1 == StateRes.NO_STATE && h2 == StateRes.NO_STATE) {
-				result += "STATE SAFE!\nNo state usage in the handlers " 
-				result += "\n" + hdl1.name + " " + hdl2.name + "\n"
+			if(hdlIndex == 1) {
+				h1Msg = true
+				h1MsgSafe = isSch
 			}
-			else if(h1 <= StateRes.SAFE_RW && h2 <= StateRes.SAFE_RW) {
-				result += "STATE SAFE!\n"
-				switch(h1) {
-					case StateRes.NO_STATE:
-						result += "Handler 1 does not use state\n"
-						break;
-					case StateRes.SAFE_READ:
-						result += "Handler 1 " + hdl1.name + " reads state variables "
-						result += readHelper(hdl1)
-						break;
-					case StateRes.SAFE_WRITE:
-						result += "Handler 1 " + hdl1.name + " writes state variables "
-						result += writeHelper(hdl1)
-						break;
-					case StateRes.SAFE_RW:
-						result += "Handler 1 " + hdl1.name + " reads state variables "
-						result += readHelper(hdl1)
-						result += " writes state variables "
-						result += writeHelper(hdl1)
-						break;
-				}
-				result += "\n"
-				switch(h2) {
-					case StateRes.NO_STATE:
-						result += "Handler 2 does not use state"
-						break;
-					case StateRes.SAFE_READ:
-						result += "Handler 2 " + hdl2.name + " reads state variables "
-						result += readHelper(hdl2)
-						break;
-					case StateRes.SAFE_WRITE:
-						result += "Handler 2 " + hdl2.name + " writes state variables "
-						result += writeHelper(hdl2)
-						break;
-					case StateRes.SAFE_RW:
-						result += "Handler 2 " + hdl2.name + " reads state variables "
-						result += readHelper(hdl2)
-						result += " writes state variables "
-						result += writeHelper(hdl2)
-						break;
-				}
-				result += "\n"
-			} else {
-				result += "POSES STATE CONSISTENCY RISKS!\n"
-				result += flagChecks()
-				switch(h1) {
-					case StateRes.UNSAFE_R:
-						result += "Handler 1 " + hdl1.name + " reads state variables "
-						result += readHelper(hdl1)
-						break;
-					case StateRes.UNSAFE_W:
-						result += "Handler 1 " + hdl1.name + " writes state variables "
-						result += writeHelper(hdl1)
-						break;
-					case StateRes.UNSAFE_RW:
-						result += "Handler 1 " + hdl1.name + " reads state variables "
-						result += readHelper(hdl1)
-						result += " writes state variables "
-						result += writeHelper(hdl1)
-						break;
-				}
-				result += "\n"
-				switch(h2) {
-					case StateRes.UNSAFE_R:
-						result += "Handler 2 " + hdl2.name + " reads state variables "
-						result += readHelper(hdl2)
-						break;
-					case StateRes.UNSAFE_W:
-						result += "Handler 2 " + hdl2.name + " writes state variables "
-						result += writeHelper(hdl2)
-						break;
-					case StateRes.UNSAFE_RW:
-						result += "Handler 2 " + hdl2.name + " reads state variables "
-						result += readHelper(hdl2)
-						result += " writes state variables "
-						result += writeHelper(hdl2)
-						break;
-				}
-				result += "\n"
+			else {
+				h2Msg = true
+				h2MsgSafe = isSch
+			}
+			if(!isSch) {
+				isSafe = false
 			}
 		}
 		
-		String flagChecks() {
+		void stateRes(StateRes h1, StateRes h2) {
+			
+			//println "stateRes: " + h1 + " " + h2			
+			if(h1 == StateRes.NO_STATE && h2 == StateRes.NO_STATE) {
+				stateStr += "STATE SAFE!\nNo state usage in the handlers " 
+				stateStr += "\n" + hdl1.name + " " + hdl2.name + "\n"
+			}
+			else if(h1 <= StateRes.SAFE_RW && h2 <= StateRes.SAFE_RW) {
+				stateStr += "STATE SAFE!\n"
+				switch(h1) {
+					case StateRes.NO_STATE:
+						stateStr += "Handler 1 does not use state\n"
+						break;
+					case StateRes.SAFE_READ:
+						stateStr += "Handler 1 reads state variables "
+						stateStr += readHelper(hdl1)
+						break;
+					case StateRes.SAFE_WRITE:
+						stateStr += "Handler 1 writes state variables "
+						stateStr += writeHelper(hdl1)
+						break;
+					case StateRes.SAFE_RW:
+						stateStr += "Handler 1 reads state variables "
+						stateStr += readHelper(hdl1)
+						stateStr += " writes state variables "
+						stateStr += writeHelper(hdl1)
+						break;
+				}
+				stateStr += "\n"
+				switch(h2) {
+					case StateRes.NO_STATE:
+						stateStr += "Handler 2 does not use state"
+						break;
+					case StateRes.SAFE_READ:
+						stateStr += "Handler 2 reads state variables "
+						stateStr += readHelper(hdl2)
+						break;
+					case StateRes.SAFE_WRITE:
+						stateStr += "Handler 2 writes state variables "
+						stateStr += writeHelper(hdl2)
+						break;
+					case StateRes.SAFE_RW:
+						stateStr += "Handler 2 reads state variables "
+						stateStr += readHelper(hdl2)
+						stateStr += " writes state variables "
+						stateStr += writeHelper(hdl2)
+						break;
+				}
+				stateStr += "\n"
+			} else {
+				stateStr += "POSES STATE CONSISTENCY RISKS!\n"
+				stateStr += stateFlagChecks()
+				switch(h1) {
+					case StateRes.UNSAFE_R:
+						stateStr += "Handler 1 reads state variables "
+						stateStr += readHelper(hdl1)
+						break;
+					case StateRes.UNSAFE_W:
+						stateStr += "Handler 1 writes state variables "
+						stateStr += writeHelper(hdl1)
+						break;
+					case StateRes.UNSAFE_RW:
+						stateStr += "Handler 1 reads state variables "
+						stateStr += readHelper(hdl1)
+						stateStr += " writes state variables "
+						stateStr += writeHelper(hdl1)
+						break;
+				}
+				stateStr += "\n"
+				switch(h2) {
+					case StateRes.UNSAFE_R:
+						stateStr += "Handler 2 reads state variables "
+						stateStr += readHelper(hdl2)
+						break;
+					case StateRes.UNSAFE_W:
+						stateStr += "Handler 2 writes state variables "
+						stateStr += writeHelper(hdl2)
+						break;
+					case StateRes.UNSAFE_RW:
+						stateStr += "Handler 2 reads state variables "
+						stateStr += readHelper(hdl2)
+						stateStr += " writes state variables "
+						stateStr += writeHelper(hdl2)
+						break;
+				}
+				stateStr += "\n"
+			}
+		}
+		
+		String stateFlagChecks() {
 			String str = ""
 			if(schFlag) {
 				str += "Schedule Overwrite is set to false! Queued execution of modifications!\n"
@@ -632,12 +674,34 @@ class ConsistencyAnalysis {
 			usrImp = res
 		}
 		
+		void usrImpFlagChecks() {
+			
+			if(h1Msg && !h1MsgSafe) {
+				usrImpStr += "Handler 1 may send duplicate notifications to user. No scheduling for messages.\n"
+			}
+			if(h2Msg && !h2MsgSafe) {
+				usrImpStr += "Handler 2 may send duplicate notifications to user. No scheduling for messages.\n"
+			}
+			
+		}
+		
 		void devModRes(int res) {
 			deviceMod = res
 		}
 		
 		@Override
 		String toString() {
+			
+			usrImpFlagChecks()
+			
+			result += "\n-----USER--IMPACT----------\n"
+			
+			result += usrImpStr
+			
+			result += "\n-----STATE--CONSISTENCY-----\n"
+			
+			result += stateStr
+			
 			return result
 		}
 		
