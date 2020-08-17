@@ -97,9 +97,7 @@ class ConsistencyAnalysis {
 		}
 	}
 	
-	//TODO: check the output validity for Hall Light Welcome application
-	//returns false positive when modifying different states and says writes to the same field
-	//the error should be writing variable information to the state field
+	
 	AnalysisResult analysisHelper(Handler h1, Handler h2) {
 		
 		AnalysisResult ar = new AnalysisResult(h1, h2)
@@ -405,8 +403,6 @@ class ConsistencyAnalysis {
 		UNS_DEV_MOD_NOTIF
 	}
 	
-	//TODO: Write the user impact analysis
-	//TODO: Add flags to AnalysisResult to store the user impact consistency information
 	AnalysisResult userImpactAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
 		
 		//if any of the two uses notifications
@@ -416,37 +412,165 @@ class ConsistencyAnalysis {
 		if(h2.hasMsg) {
 			ar = notifAnalysis(ar, h2, 2)
 		}
-		
-		h1.devMethods.each{ m ->
-			ar = devModAnalysis(ar, m)
+		println "H1: " + h1.unSch + " sch: " + h1.isSch
+		println "H2: " + h2.unSch + " sch: " + h2.isSch
+		if(h1.schMeths.size()>0 && h2.schMeths.size()>0) {
+			if(h1.unSch && h2.isSch) {
+				println "T T"
+				ar = unschHelper(ar, h1, h2, 1)
+			}
+			if(h2.unSch && h1.isSch) {
+				ar = unschHelper(ar, h2, h1, 2)
+			}
 		}
 		
-		//TODO: Check the path branching of the device modifications
-		//TODO: Check if the multiple different values are sent to the same device from the handlers
-		
-		
+		//if both of the handlers modifies a device
+		//check if any two methods in the handlers modifies the same device
+		if(h1.devMethods.size()>0 && h2.devMethods.size()>0) {
+			h1.devMethods.each{ m ->
+				h2.devMethods.each { m2->
+					
+					//oops they modify the same device
+					if(m.getRec().equals(m2.getRec())) {
+						//println "Call to same device: " + m.getRec()
+						
+						//they call the same method, if the method outcome is a fixed
+						//modification like switch.on(), then we're good
+						if(m.getM().equals(m2.getM())) {
+							
+							//both have arguments
+							if(m.arguments.size()>0 && m2.arguments.size()>0) {
+								int i = 0
+								//iterate over the arguments
+								while(i < m.arguments.size() && i < m2.arguments.size()) {
+									
+									//if arguments are not the same
+									if(m.arguments.get(i) != m2.arguments.get(i)) {
+										ar.devMultModAdd(m, 1)
+										ar.devMultModAdd(m2, 2)
+										ar.isSafe = false
+									}
+									
+									//if the arguments are same but they pass a variable as a modification
+									if(!(m.arguments.get(i) instanceof ConstantExpression)) {
+										ar.varArgModAdd(m, 1)
+										ar.isSafe = false
+									}
+									if(!(m2.arguments.get(i) instanceof ConstantExpression)) {
+										ar.varArgModAdd(m2, 2)
+										ar.isSafe = false
+									}
+									
+									i++
+								}
+							}
+						}
+						else {
+							//different methods call to the same device, different outcomes
+							ar.devMultModAdd(m, 1)
+							ar.devMultModAdd(m2, 2)
+							ar.isSafe = false
+						}
+						
+						//Check for event value conditional dev modification
+						if(m.callPath.contains("e-")) {
+							ar.devEvtCondAdd(m, 1)
+							ar.isSafe = false
+						}
+						if(m2.callPath.contains("e-")) {
+							ar.devEvtCondAdd(m2, 2)
+							ar.isSafe = false
+						}
+						
+						//Check for state value conditional device modification
+						if(m.callPath.contains("s-")) {
+							ar.devStatCondAdd(m, 1)
+							ar.isSafe = false
+						}
+						if(m2.callPath.contains("s-")) {
+							ar.devStatCondAdd(m2, 2)
+							ar.isSafe = false
+						}
+						
+						//Check for time conditional modification for the methods
+						if(m.callPath.contains("t-")) {
+							ar.devTimeCondAdd(m, 1)
+							ar.isSafe = false
+						}
+						if(m2.callPath.contains("t-")) {
+							ar.devTimeCondAdd(m2, 2)
+							ar.isSafe = false
+						}
+					}
+				}
+			}
+		} 
+		 
 		return ar
 	}
 	
-	AnalysisResult devModAnalysis(AnalysisResult ar, Method m) {
+	AnalysisResult unschHelper(AnalysisResult ar, Handler h1, Handler h2, int hIndex) {
 		
-		println "Method: " + m.method + " pth: " + m.callPath
+		//if handler is unscheduling
+		//then check if it is unscheduling a certain method call
+		//if so check if it matches any scheduling of the other handler
+		//if an unschedule matches another handler's scheduling, flag inconsistency
+		//if unscheduling is a general call and if the other handler schedules anything
+		//then flag as inconsistent
+		if(h1.unSch) {
+			if(DEBUG) println "Unsch"
+			h1.schMeths.each { sm->
+				if(sm.method.contains("unsch")) {
+					if(DEBUG) println "Meth Unsch"
+					if(sm.arguments.size() > 0) {
+						if(DEBUG) println "Arg Size"
+						String ag = sm.arguments.getAt(0).getText()
+						if(DEBUG) println "Arg: " + ag
+						h2.schMeths.each { h2m->
+							if(DEBUG) println "h2 args"
+							h2m.arguments.each { arg->
+								if(DEBUG) println "H2Arg: " + arg.getText()
+								if(arg.getText().equals(ag)) {
+									ar.unSchConflict = true
+									ar.isSafe = false
+									ar.unSchH = hIndex
+								}
+							}
+						}
+					}
+					else {
+						ar.unSchConflict = true
+						ar.isSafe = false
+						ar.unSchH = hIndex
+					}
+				}
+			}
+		}
 		
 		return ar
+		
 	}
-	
 	
 	//Safe if the notifications are scheduled execution
 	AnalysisResult notifAnalysis(AnalysisResult ar, Handler h, int hIndex) {
 		
 		h.calledMethods.each{ m->
-			if(m.method.contains("sendNotif") || m.method.contains("sendSms") || m.method.contains("sendPush")) {
-				if(m.isSch) {
+			if(m.method.contains("sendNotif") || m.method.contains("sendSms") 
+				|| m.method.contains("sendPush")) {
+				
+				if(DEBUG) println m.method + " " + m.callPath
+				
+				if(m.callPath.contains("so:")) {
 					ar.setMsgFlags(hIndex, true)
+				}
+				else if(m.callPath.contains("sf:")){
+					ar.nOverWrite = true
+					ar.setMsgFlags(hIndex, false)
 				}
 				else {
 					ar.setMsgFlags(hIndex, false)
 				}
+				
 			}
 		}
 		
@@ -468,17 +592,31 @@ class ConsistencyAnalysis {
 		
 		boolean isSafe
 		
+		//Device Modification Safety Flags
+		boolean haveDevMod
+		List devTimeCond //device modification is under a time dependent conditional block
+		List devEvtCond //device modification is under an event value dependent conditional block
+		List devStatCond //device modification is under a sate value dependent conditional block
+		List devMultMod //multiple different device modification calls to the same device
+		List varArgMod //device is modified with a variable, event, or state value, i.e. different modifications possible
+		
+		//Notification safety flags
 		boolean h1Msg
 		boolean h1MsgSafe
 		boolean h2Msg
 		boolean h2MsgSafe
+		boolean nOverWrite
+		
+		//Schedule vs Unschedule conflict
+		boolean unSchConflict
+		int unSchH
 		
 		//Output flags
 		boolean schFlag //schedule overwrite false flag 
 		boolean multModsFlag //multiple modification of the same field flag
 		boolean varSetFlag //a variable is set to the state field
 		boolean timeCondFlag //a time conditional modification of the state field
-		boolean readWriteFlag //a flag for when the methods both rad and write to the same state field
+		boolean readWriteFlag //a flag for when the methods both read and write to the same state field
 		
 		int stateMod
 		int usrImp
@@ -499,10 +637,22 @@ class ConsistencyAnalysis {
 			
 			flag = true
 			
+			haveDevMod = false
+			devTimeCond =  new ArrayList<String>()
+			devEvtCond =  new ArrayList<String>()
+			devStatCond =  new ArrayList<String>()
+			devMultMod =  new ArrayList<String>()
+			varArgMod =  new ArrayList<String>()
+		
+			
 			h1Msg = false
 			h1MsgSafe = false
 			h2Msg = false
 			h2MsgSafe = false
+			nOverWrite = false
+			
+			unSchConflict = false
+			unSchH = 0
 			
 			schFlag = false
 			multModsFlag = false
@@ -669,24 +819,163 @@ class ConsistencyAnalysis {
 			return str
 			
 		}
+
 		
-		void usrImpRes(int res) {
-			usrImp = res
+		boolean getDevMultMod() {
+			if(devMultMod.size()>0)
+				return true
+			else
+				false
+		}
+		
+		boolean getDevTimeCond() {
+			if(devTimeCond.size()>0)
+				return true
+			else
+				false
+		}
+		
+		boolean getDevEvtCond() {
+			if(devEvtCond.size()>0)
+				return true
+			else
+				false
+		}
+		
+		boolean getDevStatCond() {
+			if(devStatCond.size()>0)
+				return true
+			else
+				false
+		}
+		
+		boolean getVarArgMod() {
+			if(varArgMod.size()>0)
+				return true
+			else
+				false
 		}
 		
 		void usrImpFlagChecks() {
 			
 			if(h1Msg && !h1MsgSafe) {
-				usrImpStr += "Handler 1 may send duplicate notifications to user. No scheduling for messages.\n"
+				usrImpStr += "Handler 1 may send duplicate notifications to user. "
+				if(nOverWrite) {
+					usrImpStr += "Schedule overwrite is set to FALSE."
+				} else {
+					usrImpStr += "No scheduling for messages."
+				}
+				usrImpStr += "\n"
 			}
 			if(h2Msg && !h2MsgSafe) {
-				usrImpStr += "Handler 2 may send duplicate notifications to user. No scheduling for messages.\n"
+				usrImpStr += "Handler 2 may send duplicate notifications to user. "
+				if(nOverWrite) {
+					usrImpStr += "Schedule overwrite is set to FALSE."
+				} else {
+					usrImpStr += "No scheduling for messages."
+				}
+				usrImpStr += "\n"
+			}
+			if(getDevMultMod()) {
+				usrImpStr += "Multiple modification calls made to the same device by\n"
+				int i = 0
+				devMultMod.each { m->
+					usrImpStr += "" + m + "; "
+					i++
+					if(i%3==0)
+						usrImpStr += "\n"
+				}
+				usrImpStr += "\n"
+			}
+			if(getVarArgMod()) {
+				usrImpStr += "A Variable value is passed to the device modification call by\n"
+				int i = 0
+				varArgMod.each { m->
+					usrImpStr += "" + m + "; "
+					i++
+					if(i%3==0)
+						usrImpStr += "\n"
+				}
+				usrImpStr += "\n"
+				usrImpStr += "May result in different outcomes.\n"
+			}
+			if(getDevTimeCond()) {
+				usrImpStr += "Device modification call is inside a conditional block that uses time dependent information.\n"
+				int i = 0
+				devTimeCond.each { m->
+					usrImpStr += "" + m + "; "
+					i++
+					if(i%4==0)
+						usrImpStr += "\n"
+				}
+				usrImpStr += "\n"
+			}
+			if(getDevEvtCond()) {
+				usrImpStr += "Device modification call is inside a conditional block that uses event value information.\n"
+				int i = 0
+				devEvtCond.each { m->
+					usrImpStr += "" + m + "; "
+					i++
+					if(i%4==0)
+						usrImpStr += "\n"
+				}
+				usrImpStr += "\n"
+			}
+			if(getDevStatCond()) {
+				usrImpStr += "Device modification call is inside a conditional block that uses state information.\n"
+				int i = 0
+				devStatCond.each { m->
+					usrImpStr += "" + m + "; "
+					i++
+					if(i%4==0)
+						usrImpStr += "\n"
+				}
+				usrImpStr += "\n"
+			}
+			if(unSchConflict) {
+				usrImpStr += "Scheduling and Unschedling conflict between handlers.\n"
+				usrImpStr += "H" + unSchH + " is unscheduling a method scheduled in H" + (unSchH%2 + 1) + ".\n"
+			}
+			
+			if(usrImpStr == "") {
+				usrImpStr += "USER IMPACT SAFE/NO USER IMPACT\n"
 			}
 			
 		}
 		
-		void devModRes(int res) {
-			deviceMod = res
+		void devMultModAdd(Method m, int hInd) {
+			String str = "H" + hInd + ": " + m.toString()
+			if(!devMultMod.contains(str)) {
+				devMultMod.add(str)
+			}
+		}
+		
+		void varArgModAdd(Method m, int hInd) {
+			String str = "H" + hInd + ": " + m.toString()
+			if(!varArgMod.contains(str)) {
+				varArgMod.add(str)
+			}
+		}
+		
+		void devTimeCondAdd(Method m, int hInd) {
+			String str = "H" + hInd + ": " + m.toString()
+			if(!devTimeCond.contains(str)) {
+				devTimeCond.add(str)
+			}
+		}
+		
+		void devEvtCondAdd(Method m, int hInd) {
+			String str = "H" + hInd + ": " + m.toString()
+			if(!devEvtCond.contains(str)) {
+				devEvtCond.add(str)
+			}
+		}
+		
+		void devStatCondAdd(Method m, int hInd) {
+			String str = "H" + hInd + ": " + m.toString()
+			if(!devStatCond.contains(str)) {
+				devStatCond.add(str)
+			}
 		}
 		
 		@Override

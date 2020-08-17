@@ -46,7 +46,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 	MethodVisitor mv //a method visitor object
 	Logger log //a Logger class obect to log the analysis on an external file
 	
-	boolean DEBUG = false
+	boolean DEBUG = false //flag to print debug info, i.e. flood the output haha
+	boolean SUMMARY = false //flag for printing handler and method summary
 	
 	//Class Constructor
 	public CTAnalysisAST(){
@@ -54,12 +55,13 @@ class CTAnalysisAST extends CompilationCustomizer{
 		super(CompilePhase.SEMANTIC_ANALYSIS)//initialise the super CompilationCustomizer class
 		
 		//initialise the data structs
-		handlers = new ArrayList<Handler>() //keep as arraylist for now for simplicity
-		devices = new ArrayList();
-		allDecMeths = new ArrayList();
+		handlers = new ArrayList<Handler>() //an arraylist of handlers in the application
+		devices = new ArrayList(); //an arraylist of devices accessed by the application
+		allDecMeths = new ArrayList(); //list of all declared methods inside the application
 			 
 	}
 	
+	//Getter methods for handlers and devices
 	List getHandlers() {
 		return handlers
 	}
@@ -87,19 +89,17 @@ class CTAnalysisAST extends CompilationCustomizer{
 			summary()
 			println " "
 		}
-		//call the helper method to get the remaining elements from the application code
+		
+		//call the helper method to get the remaining information from the application code
 		getStateVariables(classNode)
 		
 		if(DEBUG)
 			println "________STATE_VAR_AN_DONE________"
-		//print out a summary of the data structures
-		summary()
 		
-//		ConsistencyAnalysis conAn = new ConsistencyAnalysis(getHandlers())
-//		
-//		conAn.analyse()
-//		
-//		conAn.print()
+		//print out a summary of the data structures
+		if(SUMMARY)
+			summary()
+
 	}
 	
 	//a methodCall visitor helper
@@ -107,25 +107,33 @@ class CTAnalysisAST extends CompilationCustomizer{
 		mv.visitMethodCallExpression(mce)
 	}
 
-	//Caller method for getting handler arguments, state accesses, and event informations usage
+	//Caller method for getting handler arguments, state accesses,
+	//event informations usage, and conditional branching information
 	//from the handler code
 	void getStateVariables(ClassNode cn) {
 		
 		
 		//PATHLOG LEGEND:
 		//c: conditional block
+		//e- event value
+		//i- if-only block
+		//el- has else block
+		//t- time conditional
+		//s- uses state info
 		//b: boolean expression
 		//bl: binary leftside exp
 		//br: binary rightside exp
 		//so: scheduled overwrite truef
 		//sf: scheduled overwrite false
-		//d: + device name
-		def pathLog 
+		//us: unscheduling method
+		//s: Scheduler handler
+		def pathLog //a log of the branching information traced to access the current line
 		
 		//cycle through all the handlers
 		handlers.each { hdl->
 			if(DEBUG) println "Handler Name: " + hdl.name
 			
+			//if the handler is a scheduled execution handler log it different
 			if(hdl.devName.contains("Scheduler")) {
 				pathLog = "s:"
 			}
@@ -145,10 +153,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 			handlerMNodeHelper(methN, hdl, cn, pathLog)
 			
 			//for each method called from the handler code, 
-			//anaylze the called method if it is declared and defined in the code
+			//analyse the called method if it is declared and defined in the code
 			hdl.calledMethods.each { mt->
 				if(DEBUG) println "called meth " + mt.method
 				
+				//if the method is declared in the application
+				//then get the method node and call the helper method
 				if(cn.getDeclaredMethods(mt.method).size()>0) {
 					methN = cn.getDeclaredMethods(mt.method).get(0)
 					handlerMNodeHelper(methN, hdl, cn, pathLog + mt.callPath)
@@ -175,8 +185,9 @@ class CTAnalysisAST extends CompilationCustomizer{
 		}
 	}
 	
-	//A recursive analysis method for getting state and event usage information and
-	//storing it in the handler object passed as parameter
+	//A recursive analysis method for getting state, 
+	//event and conditional branching information
+	//and storing it in the handler object passed as parameter
 	void stateRecurse(Statement st, Handler hdl, ClassNode cn, String pth) {
 		
 		//if block statement cycle over the statements and call this method on each
@@ -281,15 +292,25 @@ class CTAnalysisAST extends CompilationCustomizer{
 					}
 				}
 				
+				boolean unSch = false
+				if(mname.contains("unschedule")) {
+					unSch = true
+				}
 				//get the receiver of the method call
 				def rec = exp.getReceiver().toString()
 				if(exp.getReceiver() instanceof VariableExpression)
 					rec = exp.getReceiver().getName()
 					
-				//create and add the method call to the handler
-				boolean dev = hdl.devMethHelper(rec, devices)
-				hdl.addMethodCall(exp, pth + stat, sta, dev)
-				
+				//if is an unschedule function, handle differently
+				if(unSch) {
+					hdl.addMethodCall(exp, pth + "us: ", false, false)
+					hdl.setUnSch()
+				}	
+				else {
+					//create and add the method call to the handler
+					boolean dev = hdl.devMethHelper(rec, devices)
+					hdl.addMethodCall(exp, pth + stat + " ", sta, dev)
+				}
 				if(exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) {
 					if(DEBUG) println "Time: " + exp.getText()
 					hdl.addTimAcc(exp.getText())
@@ -298,14 +319,16 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 				String mtext = exp.getMethodAsString().toLowerCase()
 				//check for scheduling that uses predefined methodcalls
-				if(mtext.contains("runin") || (mtext.contains("schedule") && !mtext.contains("unschedule") )
+				if(mtext.contains("runin") || (mtext.contains("schedule") && !mtext.contains("unschedule"))
 					|| mtext.contains("runonce") || mtext.contains("runevery")) {
 					//get the argument that contains the name of the method scheduled for execution
 					String schMeth = ""
 					if(DEBUG) println "Schedule Exp " + exp
-					if(mtext.contains("runevery")) {
+					if(mtext.contains("runevery") ) {
 						schMeth = exp.getArguments().getAt(0).getText()
-					} else {
+					} else if(exp.getArguments().size()>0 && mtext.contains("unschedule")){
+						schMeth = exp.getArguments().getAt(0).getText()
+					} else{
 						schMeth = exp.getArguments().getAt(1).getText()
 					}
 					
@@ -321,13 +344,32 @@ class CTAnalysisAST extends CompilationCustomizer{
 							schMeth, 
 							new ArgumentListExpression(mn.getParameters())))
 					
+					//check for overwrite scheduling
+					boolean schOvrWr = true
+					if(exp.getArguments().size() > 2) {
+						MapExpression mep = exp.getArguments().getAt(2)
+						mep.getMapEntryExpressions().each { mee->
+							if(mee.getKeyExpression().getText().contains("overwrite")) {
+								if(mee.getValueExpression().getText().contains("false"))
+									schOvrWr = false
+							}
+						}
+						
+					}
+					
+					
 					if(DEBUG) println "Path sch: " + pth
-					println "Path sch: " + pth
-					if(hdl.schOverWrite) {
+					
+					
+					if(schOvrWr) {
+						hdl.setSch(schOvrWr)
 						stateRecurse(ext, hdl, cn, pth + "so:")
 					} else {
+						hdl.setSch(schOvrWr)
 						stateRecurse(ext, hdl, cn, pth + "sf:")
 					}
+					
+					
 				}
 				
 				//check for notification/sms sending functions, set the flag for message usage on the handler

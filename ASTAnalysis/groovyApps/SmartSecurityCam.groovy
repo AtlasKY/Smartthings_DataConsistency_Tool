@@ -67,7 +67,7 @@ def initialize() {
 
 def modeChangeHandler(evt) {
 	log.debug "mode changed to ${evt.value}"
-
+	
 	def preset = settings."pressetFor_${evt.value}"
 	preset = preset.trim()
 

@@ -14,6 +14,7 @@ class Handler{
 	boolean hasMsg
 	boolean isSch
 	boolean schOverWrite
+	boolean unSch
 	
 	List args
 	List eventTriggers
@@ -24,6 +25,7 @@ class Handler{
 	List deviceAccesses
 	List eventProps //what info of the event is used, if used
 	List timeAcc
+	List schMeths
 	
 	
 	public Handler(String n, String dn, String en) {
@@ -32,6 +34,7 @@ class Handler{
 		
 		hasMsg = false
 		isSch = false
+		unSch = false
 		schOverWrite = true
 		
 		eventTriggers = new ArrayList<String>()
@@ -46,6 +49,7 @@ class Handler{
 		eventProps = new ArrayList()
 		readStates = new ArrayList()
 		writeStates = new ArrayList()
+		schMeths = new ArrayList()
 	}
 	
 	@Override
@@ -60,6 +64,10 @@ class Handler{
 		if(!owr) {
 			schOverWrite = false
 		}
+	}
+	
+	void setUnSch() {
+		unSch = true
 	}
 	
 	void setMsg(boolean b) {
@@ -265,8 +273,26 @@ class Handler{
 		if(!calledMethods.contains(m)) {
 			calledMethods.add(m)
 		}
+		
+		//check to add device modification methods
+		//do not add device.each-like iterating methods
 		if(dev && !devMethods.contains(m)) {
-			devMethods.add(m)
+			if(mName.contains("size"))
+				return
+			
+			if(mexp.getArguments().size()>0 
+				&& !(mexp.getArguments().getAt(0) instanceof ClosureExpression)) {
+				devMethods.add(m)
+			}
+			else if(mexp.getArguments().size() == 0) {
+				devMethods.add(m)
+			}
+		}
+		
+		//If the method is a schedule method
+		if(m.method.contains("schedule") || m.method.toLowerCase().contains("runin") || m.method.toLowerCase().contains("runevery")) {
+			println "Schedule meth: " + m
+			schMeths.add(m)
 		}
 		
 	}
@@ -289,6 +315,7 @@ class Handler{
 		def state = ""
 		def methods = ""
 		def devMeth = ""
+		def schMeth = ""
 		def stMeth = ""
 		def triggers = ""
 		def evprops = ""
@@ -329,6 +356,12 @@ class Handler{
 				devMeth += "	" + m.extString() + "\n"
 			}
 		}
+		if(schMeths.size()>0) {
+			schMeth = "\nSchedule Methods: \n"
+			schMeths.each { m->
+				schMeth += "	SchM: " + m + "\n"
+			}
+		}
 		if(readStates.size()>0) {
 			state = "\nRead States: "
 			readStates.each { st->
@@ -358,7 +391,7 @@ class Handler{
 		}
 		
 		return nm + "\nDevice Name: " + devName + triggers + sch + evprops + methods + state + 
-		 msg + tAcc + devMeth + stMeth + "\n"
+		 msg + tAcc + devMeth + schMeth + stMeth + "\n"
 	}
 	
 	
@@ -412,6 +445,10 @@ class Handler{
 		
 		String getM() {
 			return method
+		}
+		
+		String getRec() {
+			return receiver
 		}
 		
 		void setPath(String pth) {
@@ -540,12 +577,12 @@ class Handler{
 				}
 			}
 			st = st + ")"
-			if(isCond) {
+		/*	if(isCond) {
 				st += "[cond-ex]"
 			}
 			if(isSch) {
 				st += "[scheduled]"
-			}
+			} */
 			return st
 		}
 		
