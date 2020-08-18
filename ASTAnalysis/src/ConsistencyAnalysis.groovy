@@ -412,11 +412,10 @@ class ConsistencyAnalysis {
 		if(h2.hasMsg) {
 			ar = notifAnalysis(ar, h2, 2)
 		}
-		println "H1: " + h1.unSch + " sch: " + h1.isSch
-		println "H2: " + h2.unSch + " sch: " + h2.isSch
+		if(DEBUG) println "H1: " + h1.unSch + " sch: " + h1.isSch
+		if(DEBUG) println "H2: " + h2.unSch + " sch: " + h2.isSch
 		if(h1.schMeths.size()>0 && h2.schMeths.size()>0) {
 			if(h1.unSch && h2.isSch) {
-				println "T T"
 				ar = unschHelper(ar, h1, h2, 1)
 			}
 			if(h2.unSch && h1.isSch) {

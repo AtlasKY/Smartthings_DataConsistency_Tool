@@ -8,6 +8,8 @@ import org.codehaus.groovy.ast.stmt.ExpressionStatement
 
 class Handler{
 	
+	boolean DEBUG = false
+	
 	String name
 	String devName
 	
@@ -291,7 +293,7 @@ class Handler{
 		
 		//If the method is a schedule method
 		if(m.method.contains("schedule") || m.method.toLowerCase().contains("runin") || m.method.toLowerCase().contains("runevery")) {
-			println "Schedule meth: " + m
+			if(DEBUG) println "Schedule meth: " + m
 			schMeths.add(m)
 		}
 		

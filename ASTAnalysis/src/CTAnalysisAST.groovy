@@ -47,7 +47,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 	Logger log //a Logger class obect to log the analysis on an external file
 	
 	boolean DEBUG = false //flag to print debug info, i.e. flood the output haha
-	boolean SUMMARY = false //flag for printing handler and method summary
+	boolean SUMMARY = true //flag for printing handler and method summary
 	
 	//Class Constructor
 	public CTAnalysisAST(){
@@ -195,7 +195,33 @@ class CTAnalysisAST extends CompilationCustomizer{
 			st.getStatements().each { bst->
 				stateRecurse(bst, hdl, cn, pth)
 			}
-		} //if it is an if statement call this method on the boolean expression, if block, and else block
+		} 
+		else if(st instanceof ForStatement) {
+				def devVar = ""
+				def locVar = ""
+				
+				st.getVariableScope().getReferencedClassVariables().each { var->
+					def key = var.getKey()
+					devices.each { dev->
+						if(dev.devName.contains(key)) {
+							devVar = key
+							locVar = st.getVariable().getName()
+						}
+					}
+				}
+				BlockStatement bs = (BlockStatement) st.getLoopBlock()
+				bs.getStatements().each { lst->
+					if(locVar != "") {
+						stateRecurse(lst, hdl, cn, pth + "d:" + devVar + ":")
+					}
+					else {
+						stateRecurse(lst, hdl, cn, pth)
+					}
+				}
+			}
+		
+		
+		//if it is an if statement call this method on the boolean expression, if block, and else block
 		else if(st instanceof IfStatement) {
 			def mods = ""
 			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
@@ -497,7 +523,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				if(exp.getText().contains("state.") && !pth.contains("bl:")) {
 					hdl.addReadState(exp.getText(), pth)
 				}
-			}
+			} 
 		}
 		
 	}
@@ -547,7 +573,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 				}
 			}
 		}
-		
 		
 		//Visitor for MEthod Call Expressions
 		//
@@ -722,6 +747,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 		@Override
 		public String toString() {
 			return "Device Name: " + devName + " Capability Req: " + cap + ""
+		}
+		
+		@Override
+		boolean equals(Object o) {
+			return devName.equals(o.toString())
 		}
 	}
 	
