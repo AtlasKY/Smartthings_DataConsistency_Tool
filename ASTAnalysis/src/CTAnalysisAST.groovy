@@ -47,7 +47,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 	Logger log //a Logger class obect to log the analysis on an external file
 	
 	boolean DEBUG = false //flag to print debug info, i.e. flood the output haha
-	boolean SUMMARY = true //flag for printing handler and method summary
+	boolean SUMMARY = false //flag for printing handler and method summary
 	
 	//Class Constructor
 	public CTAnalysisAST(){
@@ -233,8 +233,10 @@ class CTAnalysisAST extends CompilationCustomizer{
 				mods += "el-"
 			}
 			
-			if(est.getText().contains("now") || est.getText().contains("time"))	
+			if((est.getText().contains("now") || est.getText().contains("time")) &&
+				 !(est.getText().contains("log"))) {
 				mods += "t-"
+			}
 			
 			if(est.getText().contains("state.")) {
 				mods += "s-"
@@ -337,7 +339,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 					boolean dev = hdl.devMethHelper(rec, devices)
 					hdl.addMethodCall(exp, pth + stat + " ", sta, dev)
 				}
-				if(exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) {
+				if((exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) && 
+					!(exp.getText().toLowerCase().contains("log"))) {
 					if(DEBUG) println "Time: " + exp.getText()
 					hdl.addTimAcc(exp.getText())
 				}
@@ -345,8 +348,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 				String mtext = exp.getMethodAsString().toLowerCase()
 				//check for scheduling that uses predefined methodcalls
-				if(mtext.contains("runin") || (mtext.contains("schedule") && !mtext.contains("unschedule"))
-					|| mtext.contains("runonce") || mtext.contains("runevery")) {
+				if(mtext.equals("runin") || (mtext.equals("schedule") && !mtext.equals("unschedule"))
+					|| mtext.equals("runonce") || mtext.contains("runevery")) {
 					//get the argument that contains the name of the method scheduled for execution
 					String schMeth = ""
 					if(DEBUG) println "Schedule Exp " + exp
@@ -354,9 +357,14 @@ class CTAnalysisAST extends CompilationCustomizer{
 						schMeth = exp.getArguments().getAt(0).getText()
 					} else if(exp.getArguments().size()>0 && mtext.contains("unschedule")){
 						schMeth = exp.getArguments().getAt(0).getText()
-					} else{
+					} else {
+						println exp
+						println hdl.name
 						schMeth = exp.getArguments().getAt(1).getText()
 					}
+					
+					//TODO: incorporate method names into the path 
+					//to guard against infinite recursion stack overflows
 					
 					//find the declared method within the code and get the method node
 					def mn = cn.getDeclaredMethods(schMeth).get(0)
@@ -421,7 +429,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					//cycle through the devices to see if it contains the receiver,
 					//if it contains then set isDev to true
 					devices.each { dv->
-						if(dv.devName.contains(recver)) {
+						if(dv.devName != null && dv.devName.contains(recver)) {
 							isDev = true
 						}
 					}
@@ -627,46 +635,47 @@ class CTAnalysisAST extends CompilationCustomizer{
 			}
 			
 			//SUBSCRIPTION HANDLER
-			if(mceText.equals("subscribe")) {
+			if(mceText.equals("subscribe") && mce.getArguments().size()>0) {
 				
 				List arglist = mce.getArguments().toList()
 				
 				if(DEBUG) println "Handler Subs: " + mce.getText()
 				
-				def hname
-				def dname
-				def ename
-				
-				if(arglist.get(0) instanceof VariableExpression){
+				def hname = ""
+				def dname = ""
+				def ename = ""
+				if(arglist.size() >= 3) {
+					if(arglist.get(0) instanceof VariableExpression){
+						
+						VariableExpression varex = (VariableExpression) arglist.get(0)
+						dname = varex.getName()
+						if(DEBUG) println "Dev Name: "
 					
-					VariableExpression varex = (VariableExpression) arglist.get(0)
-					dname = varex.getName()
-					if(DEBUG) println "Dev Name: "
+					}
+					
+					if(arglist.get(1) instanceof ConstantExpression){
+						
+						ConstantExpression conex = (ConstantExpression) arglist.get(1)
+						
+						ename = conex.getValue()
+					}
+					
+					if(arglist.get(2) instanceof VariableExpression){
+						VariableExpression varex = (VariableExpression) arglist.get(2)
+						
+						hname = varex.getName()
+					} 
+					else if(arglist.get(2) instanceof ConstantExpression) {
+						ConstantExpression conex = (ConstantExpression) arglist.get(2)
+						
+						hname = conex.getValue()
+					}
+				 
 				
+					if(DEBUG) println "Handler & Device: " + hname + " " + dname + " " + ename
+					
+					handlerAdder(new Handler(hname, dname, dname + "." + ename))
 				}
-				
-				if(arglist.get(1) instanceof ConstantExpression){
-					
-					ConstantExpression conex = (ConstantExpression) arglist.get(1)
-					
-					ename = conex.getValue()
-				}
-				
-				if(arglist.get(2) instanceof VariableExpression){
-					VariableExpression varex = (VariableExpression) arglist.get(2)
-					
-					hname = varex.getName()
-				} 
-				else if(arglist.get(2) instanceof ConstantExpression) {
-					ConstantExpression conex = (ConstantExpression) arglist.get(2)
-					
-					hname = conex.getValue()
-				}
-				
-				if(DEBUG) println "Handler & Device: " + hname + " " + dname + " " + ename
-				
-				handlerAdder(new Handler(hname, dname, dname + "." + ename))
-				
 			}
 			
 			if(mceText.equals("schedule")) {
@@ -675,7 +684,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 				def hname = ((ConstantExpression) arglist.get(1)).getValue()
 				def dname = "Scheduler"
-				def ename = "Schedule on " + ((VariableExpression)arglist.get(0)).getName()
+				def ename = "Schedule on " + (arglist.get(0)).getText()
 				boolean schOvrWr = true 
 				
 				//get the arguments, if there are more than 2 arguments that means there's an explicit

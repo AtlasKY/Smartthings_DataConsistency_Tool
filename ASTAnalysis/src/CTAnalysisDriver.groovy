@@ -25,7 +25,7 @@ class CTAnalysisDriver {
 		
 		File dir = new File(code_dir).eachFile { file ->			
 			//Single file check
-			if(file.getName().toLowerCase().contains("")) {
+			if(file.getName().toLowerCase().contains("smartsecurity.")) {
 				
 				CTAnalysisAST ctal = new CTAnalysisAST()
 				

@@ -236,9 +236,11 @@ class ConsistencyAnalysis {
 				//if rs equals st then check
 				if(rs.equals(st)) {
 					
+					def schSafe = stateSchSafe(st)
+					
 					//If it is not a safely scheduled write then check
 					//if schedule is safe then safe
-					if(stateSchSafe(st) == Schedule.NO_SCH) {
+					if(schSafe == Schedule.NO_SCH) {
 						
 							ar.readWriteFlag = true
 							
@@ -261,14 +263,14 @@ class ConsistencyAnalysis {
 								}
 							}
 							
-					} else if(stateSchSafe(st) == Schedule.OW_FALSE) {
+					} else if(schSafe == Schedule.OW_FALSE) {
 						//if unsafe scheduling
 						ar.flag = false
 						ar.isSafe = false
 						ar.schFlag = true //check the no overwrite scheduling flag
 					}
 					
-					if(timeCheck(st)) {
+					if(schSafe != Schedule.OW_TRUE &&timeCheck(st)) {
 						//if inside a time dependent conditional block
 						ar.flag = false
 						ar.timeCondFlag = true
@@ -294,10 +296,10 @@ class ConsistencyAnalysis {
 			//if different fields are accessed then safe
 			//if ws equals st then check
 			if(ws.equals(st)) {
-				
+				def schSafe = stateSchSafe(st)
 				//If it is not a safely scheduled write then check
 				//if schedule is safe then safe
-				if(stateSchSafe(st) == Schedule.NO_SCH) {
+				if( schSafe == Schedule.NO_SCH) {
 					
 					//does it have more than one unscheduled write to the same field
 					if(writeCount(h, st) != StateWFlag.MULTI_W_DIFF_VAL) {
@@ -320,14 +322,14 @@ class ConsistencyAnalysis {
 						ar.multModsFlag = true //check the multipl modification flag
 						ar.isSafe = false
 					}
-				} else if(stateSchSafe(st) == Schedule.OW_FALSE) {
+				} else if(schSafe == Schedule.OW_FALSE) {
 					//if unsafe scheduling
 					ar.flag = false
 					ar.isSafe = false
 					ar.schFlag = true //check the no overwrite scheduling flag
 				} 
 				
-				if(timeCheck(st)) {
+				if(schSafe != Schedule.OW_TRUE && timeCheck(st)) {
 					//if inside a time dependent conditional block
 					ar.flag = false
 					ar.isSafe = false
@@ -857,7 +859,10 @@ class ConsistencyAnalysis {
 		
 		void usrImpFlagChecks() {
 			
-			if(h1Msg && !h1MsgSafe) {
+			println "" + h1Msg + " " + h1MsgSafe
+			println "" + h2Msg + " " + h2MsgSafe
+			
+			if(h1Msg && h2Msg && !h1MsgSafe && !h2MsgSafe) {
 				usrImpStr += "Handler 1 may send duplicate notifications to user. "
 				if(nOverWrite) {
 					usrImpStr += "Schedule overwrite is set to FALSE."
@@ -865,8 +870,6 @@ class ConsistencyAnalysis {
 					usrImpStr += "No scheduling for messages."
 				}
 				usrImpStr += "\n"
-			}
-			if(h2Msg && !h2MsgSafe) {
 				usrImpStr += "Handler 2 may send duplicate notifications to user. "
 				if(nOverWrite) {
 					usrImpStr += "Schedule overwrite is set to FALSE."
@@ -875,6 +878,17 @@ class ConsistencyAnalysis {
 				}
 				usrImpStr += "\n"
 			}
+		/*	if(h2Msg && !h2MsgSafe && !h1MsgSafe) {
+				usrImpStr += "Handler 2 may send duplicate notifications to user. "
+				if(nOverWrite) {
+					usrImpStr += "Schedule overwrite is set to FALSE."
+				} else {
+					usrImpStr += "No scheduling for messages."
+				}
+				usrImpStr += "\n"
+			} */
+			
+			
 			if(getDevMultMod()) {
 				usrImpStr += "Multiple modification calls made to the same device by\n"
 				int i = 0

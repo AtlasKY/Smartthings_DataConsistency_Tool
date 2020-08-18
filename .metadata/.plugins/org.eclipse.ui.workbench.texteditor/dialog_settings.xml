@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="oops"/>
+		<item key="selection" value="state"/>
 		<item key="wrap" value="true"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
-			<item value="oops"/>
-			<item value="hall"/>
+			<item value="state"/>
+			<item value="timacc"/>
+			<item value="timeacc"/>
 			<item value="t-"/>
-			<item value="time"/>
-			<item value="varArg"/>
-			<item value="println"/>
-			<item value="callPath"/>
-			<item value="runin"/>
-			<item value="setsch"/>
-			<item value="sched"/>
-			<item value="setSch"/>
-			<item value="schOver"/>
-			<item value="sf:"/>
-			<item value="isSch"/>
-			<item value="notif"/>
+			<item value="now"/>
+			<item value="garageDoor"/>
+			<item value="garageDoor7"/>
+			<item value="schedule"/>
+			<item value="0 *"/>
+			<item value="schedule on"/>
+			<item value="scheduled"/>
+			<item value="sch:"/>
+			<item value="H&quot; +"/>
+			<item value="H"/>
+			<item value="schedule meth"/>
 		</list>
 		<list key="replacehistory">
 			<item value="if(DEBUG) println"/>
@@ -30,10 +30,10 @@
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="77"/>
-		<item key="DIALOG_Y_ORIGIN" value="240"/>
+		<item key="DIALOG_X_ORIGIN" value="1113"/>
+		<item key="DIALOG_Y_ORIGIN" value="526"/>
 		<item key="DIALOG_WIDTH" value="336"/>
-		<item key="DIALOG_HEIGHT" value="473"/>
+		<item key="DIALOG_HEIGHT" value="468"/>
 		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>
 	</section>
 </section>
