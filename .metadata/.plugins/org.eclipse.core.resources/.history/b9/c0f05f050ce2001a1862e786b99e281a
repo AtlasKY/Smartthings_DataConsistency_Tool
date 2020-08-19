@@ -127,7 +127,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//sf: scheduled overwrite false
 		//us: unscheduling method
 		//s: Scheduler handler
-		//m: method that the resursion is currently in to prevent recursive infinite loops in analysis
 		def pathLog //a log of the branching information traced to access the current line
 		
 		//cycle through all the handlers
@@ -153,18 +152,15 @@ class CTAnalysisAST extends CompilationCustomizer{
 			//recursively analyze the method node
 			handlerMNodeHelper(methN, hdl, cn, pathLog)
 			
-			//a list to prevent concurrent modification error in the loop below
-			//store the method nodes to be iterated over
-			List methTemps = new ArrayList()
 			
+			List methTemps = new ArrayList()
 			//for each method called from the handler code, 
 			//analyse the called method if it is declared and defined in the code
 			hdl.calledMethods.each { mt->
 				if(DEBUG) println "called meth " + mt.method
 				
 				//if the method is declared in the application
-				//then add the method to the temp list
-				//to get the method node and call the method node handler
+				//then get the method node and call the helper method
 				if(cn.getDeclaredMethods(mt.method).size()>0) {
 					methTemps.add(mt)
 				}
@@ -205,14 +201,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 			st.getStatements().each { bst->
 				stateRecurse(bst, hdl, cn, pth)
 			}
-		}  //if the statement is a for loop
+		} 
 		else if(st instanceof ForStatement) {
 				def devVar = ""
 				def locVar = ""
 				
-				//check if the range of the for loop in for(locVar in range) format
-				//corresponds to a list of devices
-				//if it is then pass it into the path variable
 				st.getVariableScope().getReferencedClassVariables().each { var->
 					def key = var.getKey()
 					devices.each { dev->
@@ -222,7 +215,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 						}
 					}
 				}
-				//iterate over the statements inside the for loop block
 				BlockStatement bs = (BlockStatement) st.getLoopBlock()
 				bs.getStatements().each { lst->
 					if(locVar != "") {
@@ -237,39 +229,25 @@ class CTAnalysisAST extends CompilationCustomizer{
 		
 		//if it is an if statement call this method on the boolean expression, if block, and else block
 		else if(st instanceof IfStatement) {
-			
-			//a string to log the conditional flags
 			def mods = ""
-			//get the boolean conditional of the if statement
 			Statement est = new ExpressionStatement((Expression)st.getBooleanExpression())
-			
-			//recurse over the boolean exp
 			stateRecurse(est, hdl, cn, pth + "b:")//boolean block
 			
-			//if there is an else block, log el-, if there's no else block log i-
 			if(st.getElseBlock().isEmpty()) {
 				mods += "i-"
 			} else {
 				mods += "el-"
 			}
 			
-			//if the conditional uses time info like now() or time keyword
-			//then log t- to the flags
 			if((est.getText().contains("now") || est.getText().contains("time")) &&
 				 !(est.getText().contains("log"))) {
 				mods += "t-"
 			}
 			
-			//if the boolean check uses state info,
-			//log s- to the flags
 			if(est.getText().contains("state.")) {
 				mods += "s-"
 			}
 			
-			//check for event information usage in the conditional check
-			//iterate over the arguments to the handler, i.e. evt variable
-			//if the boolean contains the argument, then it uses event information
-			//log e- + argument.event value accessed + |- 
 			hdl.args.each { a-> 
 				if(est.getText().contains(a)) {
 					String txt = est.getText()
@@ -291,7 +269,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				}
 			}
 			
-			//if the boolean exp is a method call, get state related information
+				
 			Expression mex = st.getBooleanExpression().getExpression()	
 			if(mex instanceof MethodCallExpression) {
 				def i = hdl.getMeth(mex.getMethodAsString())
@@ -299,8 +277,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					mods += "s-"
 				}
 			}
-			
-			//recurse over the if and else blocks with respective path flags
+				
 			stateRecurse(st.getIfBlock(), hdl, cn, pth  + mods + "ic:")//if block
 			stateRecurse(st.getElseBlock(), hdl, cn, pth  + mods + "ec:")
 		}
@@ -353,7 +330,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 						}
 					}
 					
-					//check if the method is an unschedule method
 					boolean unSch = false
 					if(mname.contains("unschedule")) {
 						unSch = true
@@ -373,8 +349,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 						boolean dev = hdl.devMethHelper(rec, devices)
 						hdl.addMethodCall(exp, pth + stat + " ", sta, dev)
 					}
-					
-					//if expression uses time info, log the time access in the handler
 					if((exp.getText().toLowerCase().contains("timeofday") || exp.getText().contains("now")) && 
 						!(exp.getText().toLowerCase().contains("log"))) {
 						if(DEBUG) println "Time: " + exp.getText()
@@ -394,8 +368,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 						} else if(exp.getArguments().size()>0 && mtext.contains("unschedule")){
 							schMeth = exp.getArguments().getAt(0).getText()
 						} else {
-						//	println exp
-						//	println hdl.name
+							println exp
+							println hdl.name
 							schMeth = exp.getArguments().getAt(1).getText()
 						}
 						

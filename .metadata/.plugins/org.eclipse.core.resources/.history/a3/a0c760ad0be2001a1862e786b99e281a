@@ -199,7 +199,7 @@ class Handler{
 		if(path.contains("d:")) {
 			def devin = path.indexOf("d:")+2
 			def devname = ""
-			while(devin < path.length() && path.getAt(devin)!= ":") {
+			while(path.getAt(devin)!= ":") {
 				devname += path.getAt(devin)
 				devin++
 			}

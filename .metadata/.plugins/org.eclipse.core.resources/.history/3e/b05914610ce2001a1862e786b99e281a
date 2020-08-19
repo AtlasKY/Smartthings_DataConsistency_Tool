@@ -859,8 +859,8 @@ class ConsistencyAnalysis {
 		
 		void usrImpFlagChecks() {
 			
-//			println "" + h1Msg + " " + h1MsgSafe
-//			println "" + h2Msg + " " + h2MsgSafe
+			println "" + h1Msg + " " + h1MsgSafe
+			println "" + h2Msg + " " + h2MsgSafe
 			
 			if(h1Msg && h2Msg && !h1MsgSafe && !h2MsgSafe) {
 				usrImpStr += "Handler 1 may send duplicate notifications to user. "

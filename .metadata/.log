@@ -7274,3 +7274,41 @@ java.lang.IllegalArgumentException: Argument not valid
 	at org.eclipse.equinox.launcher.Main.invokeFramework(Main.java:657)
 	at org.eclipse.equinox.launcher.Main.basicRun(Main.java:594)
 	at org.eclipse.equinox.launcher.Main.run(Main.java:1447)
+
+!ENTRY org.eclipse.jdt.groovy.core 4 0 2020-08-19 14:59:37.892
+!MESSAGE Groovy compiler error
+!STACK 0
+BUG! exception in phase 'semantic analysis' in source unit 'C:\Users\AtlasKaan\Desktop\EclipseASTWorkspace\ASTAnalysis\src\CTAnalysisAST.groovy' commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:915)
+	at org.codehaus.groovy.control.CompilationUnit.compile(CompilationUnit.java:634)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.processToPhase(GroovyCompilationUnitDeclaration.java:224)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.GroovyCompilationUnitDeclaration.generateCode(GroovyCompilationUnitDeclaration.java:309)
+	at org.eclipse.jdt.internal.compiler.Compiler.resolve(Compiler.java:1095)
+	at org.eclipse.jdt.internal.core.CompilationUnitProblemFinder.process(CompilationUnitProblemFinder.java:280)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.buildStructure(GroovyCompilationUnit.java:337)
+	at org.eclipse.jdt.internal.core.Openable.generateInfos(Openable.java:268)
+	at org.eclipse.jdt.internal.core.JavaElement.openWhenClosed(JavaElement.java:598)
+	at org.eclipse.jdt.internal.core.CompilationUnit.makeConsistent(CompilationUnit.java:1149)
+	at org.codehaus.jdt.groovy.model.GroovyReconcileWorkingCopyOperation.makeConsistent(GroovyReconcileWorkingCopyOperation.java:62)
+	at org.eclipse.jdt.internal.core.ReconcileWorkingCopyOperation.executeOperation(ReconcileWorkingCopyOperation.java:94)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.run(JavaModelOperation.java:736)
+	at org.eclipse.jdt.internal.core.JavaModelOperation.runOperation(JavaModelOperation.java:802)
+	at org.codehaus.jdt.groovy.model.GroovyCompilationUnit.reconcile(GroovyCompilationUnit.java:427)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:131)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.access$0(JavaReconcilingStrategy.java:113)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy$1.run(JavaReconcilingStrategy.java:93)
+	at org.eclipse.core.runtime.SafeRunner.run(SafeRunner.java:45)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:90)
+	at org.eclipse.jdt.internal.ui.text.java.JavaReconcilingStrategy.reconcile(JavaReconcilingStrategy.java:157)
+	at org.eclipse.jdt.internal.ui.text.CompositeReconcilingStrategy.reconcile(CompositeReconcilingStrategy.java:94)
+	at org.eclipse.jdt.internal.ui.text.JavaCompositeReconcilingStrategy.reconcile(JavaCompositeReconcilingStrategy.java:107)
+	at org.eclipse.jface.text.reconciler.MonoReconciler.process(MonoReconciler.java:76)
+	at org.eclipse.jface.text.reconciler.AbstractReconciler$BackgroundThread.run(AbstractReconciler.java:210)
+Caused by: org.codehaus.jdt.groovy.internal.compiler.ast.GroovyEclipseBug: commencingResolution failed: no declaration found for class CTAnalysisAST$MethodVisitor
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.commencingResolution(JDTResolver.java:224)
+	at org.codehaus.groovy.control.ResolveVisitor.visitClass(ResolveVisitor.java:1494)
+	at org.codehaus.groovy.control.ResolveVisitor.startResolving(ResolveVisitor.java:266)
+	at org.codehaus.jdt.groovy.internal.compiler.ast.JDTResolver.startResolving(JDTResolver.java:195)
+	at org.codehaus.groovy.control.CompilationUnit.lambda$0(CompilationUnit.java:728)
+	at org.codehaus.groovy.control.CompilationUnit$ISourceUnitOperation.doPhaseOperation(CompilationUnit.java:906)
+	... 24 more
