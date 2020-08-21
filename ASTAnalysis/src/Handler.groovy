@@ -6,30 +6,36 @@ import org.codehaus.groovy.ast.expr.MethodCallExpression
 import org.codehaus.groovy.ast.stmt.BlockStatement
 import org.codehaus.groovy.ast.stmt.ExpressionStatement
 
+
+//This class is an object that stores information for individual Event Handlers
+//in a groovy SmartApp. Is a data structure and has no analysis within
+//also has a subclass Method, that stores the information of a singular 
+//method called from inside the Handler and the Handler stores 
+//a list consisting of these Method objects
 class Handler{
 	
 	boolean DEBUG = false
 	
-	String name
-	String devName
+	String name //name of the handler
+	String devName //the device associated with the handler
 	
-	boolean hasMsg
-	boolean isSch
-	boolean schOverWrite
-	boolean unSch
+	boolean hasMsg //does it use messaging
+	boolean isSch //does it use scheduling/is it a scheduled handler
+	boolean schOverWrite //does it overwrite schedules
+	boolean unSch //does it have unschedule methods
 	
-	List args
-	List eventTriggers
-	List readStates
-	List writeStates
-	List calledMethods
-	List devMethods
-	List deviceAccesses
+	List args //arguments to the handler
+	List eventTriggers //events subscribed to
+	List readStates //states read by the handler
+	List writeStates //states written to by the handler
+	List calledMethods //methods called by the handler
+	List devMethods //device modification methods called by the handler
+	List deviceAccesses //list of device accesses
 	List eventProps //what info of the event is used, if used
-	List timeAcc
-	List schMeths
+	List timeAcc //list of time related info accesses
+	List schMeths //methods that are scheduled for execution
 	
-	
+	//Handler constructor method, initialise the flags, lists, and fields
 	public Handler(String n, String dn, String en) {
 		name = n
 		devName = dn
@@ -61,6 +67,7 @@ class Handler{
 		}
 	}
 	
+	//update the scheduling information and flag
 	void setSch(boolean owr) {
 		isSch = true
 		if(!owr) {
@@ -68,10 +75,12 @@ class Handler{
 		}
 	}
 	
+	//update usnchedule flag
 	void setUnSch() {
 		unSch = true
 	}
 	
+	//update has message flag
 	void setMsg(boolean b) {
 		hasMsg = b
 	}
@@ -113,19 +122,28 @@ class Handler{
 		}
 	}
 	
+	//add event
 	void addEvent(String evt) {
 		eventTriggers.add(evt)
 	}
 	
+	//basic method for add state
 	void addReadState(String s, String pth) {
 		addReadState(s, pth, null)
 	}
+	
+	//overloaded method to add read state
 	void addReadState(String s, String pth, Expression exp) {
+		
+		//create a new state object
 		State st = new State(s, pth)
 		
+		//if the exp is not null, add the exp as the boolean read to the state
 		if(exp != null)
 			st.addBoolRead(exp)
 		
+		//if there are read states in the handler, check if the current state is present
+		//if not then add it
 		if(readStates.size()>0) {
 			boolean hasSt = false
 			//if has the same path state object then not add
@@ -143,9 +161,15 @@ class Handler{
 		}
 	}
 	
+	//method to add a state the handler writes to
 	void addWriteState(String s, String pth, Expression exp) {
 		State st = new State(s, pth)
+		
+		//store the expression in the state object
 		st.setWrite(exp)
+		
+		//if the state exists in the write states list, then dont add
+		//else add the state
 		if(writeStates.size()>0) {
 			boolean hasSt = false
 			//if has the same path state object then not add
@@ -163,39 +187,42 @@ class Handler{
 		}
 	}
 	
+	//add a non-duplicate device access
 	void addDevAcc(String s) {
 		if(!deviceAccesses.contains(s))
 			deviceAccesses.add(s)
 	}
 	
+	//helper for checking whether a method is called on a device
 	boolean devMethHelper(String rec, List devices) {
-	//	println "Receiver " + rec
 		
 		def ret = false
 		
 		if(rec.contains("log") || rec.contains("this"))
 			return false
-				
-	//	println devices
-			
+							
 		devices.each { d->
 			if(d.devName.contains(rec)) {
-	//			println devName + " " + rec
 				ret = true
 			}
 		}
 		return ret
 	}
 	
+	//default method to add a method call to the list
 	void addMethodCall(MethodCallExpression mexp, String path, boolean sta, boolean dev) {
 		addMethodCall(mexp, mexp.getReceiver().getText(), path, sta, dev)
 	}
 	
+	//overloaded method to add a method call to the list
 	void addMethodCall(MethodCallExpression mexp, String receiver,  String path, boolean sta, boolean dev) {
-		String mName = mexp.getReceiver().getText() + "." + mexp.getMethodAsString()
+		
+		//name of the method
+		String mName = receiver + "." + mexp.getMethodAsString()
 		
 		def rec = receiver
 		
+		//check for a device call tag in the path
 		if(path.contains("d:")) {
 			def devin = path.indexOf("d:")+2
 			def devname = ""
@@ -203,42 +230,44 @@ class Handler{
 				devname += path.getAt(devin)
 				devin++
 			}
-		//	println "Devname: " + devname + " Receiver: " + receiver
 			rec = devname
-			//println "Parameter Check: " + parname + " Dev Check: " + devname + "\nPath: " + path
 		}
+		//create a method object
 		Method m = new Method(rec, mexp.getMethodAsString())
 		
+		//if method has schedule
 		if(path.contains("so:")) {
 			m.setSch()
 		}
 		
 		m.setCallPath(path)
 		
+		//if it uses state information in the method
 		if(sta) {
 			m.setState()
 			String state = ""
 			boolean isWrite = false
 			def ins = path.size() 
+			
+			//gets the state information from the path and adds it to method object
 			ins = path.lastIndexOf("st:", ins)
-			//println path + ins + " " + path.size()
 			while( ins != -1) {
 				def i = ins + 3
-				//println state
-//				println ins + " " + i + " " + 
 				while(i < path.size() && path.getAt(i) != ":") {
 					state += path.getAt(i)
 					i++
 				}
 				ins = path.lastIndexOf("st:", ins-1)
 			}
-			//println state
+
+			//if the state is contained in the write state list, then it is a state write
 			if(writeStates.contains(state)) {
 				isWrite = true
 			}
 			m.addState(state, isWrite)
 		}
-		
+
+		//if the method is under a conditional block		
 		if(path.contains("c:")) {
 		//	println "\nHandler: " + name
 			if(!m.isCond)
@@ -268,10 +297,12 @@ class Handler{
 					}
 				}
 			}
-		}
+		}	//if the method is a logging method, get the arguments
 		else if(!mName.contains("log")){
 			m.addArg(mexp.getArguments())
 		}
+		
+		//if the method already exists in the list, dont add
 		if(!calledMethods.contains(m)) {
 			calledMethods.add(m)
 		}
@@ -299,11 +330,13 @@ class Handler{
 		
 	}
 	
+	//add time access to the handler
 	void addTimAcc(String s) {
 		if(!timeAcc.contains(s))
 			timeAcc.add(s)
 	}
 	
+	//returns the index of the method with the name m
 	int getMeth(String m) {
 		def i = 0
 		while(!calledMethods.get(i).getM().contains(m)) {
@@ -312,6 +345,7 @@ class Handler{
 		return i
 	}
 	
+	//handler string output
 	@Override
 	public String toString() {
 		def state = ""
@@ -400,22 +434,25 @@ class Handler{
 	
 	class Method{
 		
-		String receiver
-		String method
-		String callPath
-		List arguments
-		boolean isCond
-		boolean useState
-		boolean isSch
-		String condPar
-		List rState
-		List wState
-		List evtVal
+		String receiver //receiver of the method call
+		String method //name of the method
+		String callPath //path to the method call
+		List arguments //arguments passed to the method call
+		boolean isCond //is it under conditional block
+		boolean useState //does it use state fields, read/write
+		boolean isSch //is it scheduled
+		String condPar 
+		List rState //read states
+		List wState //written states
+		List evtVal //event value accesses
 		
+		//method constructor
 		public Method(String r) {
 			this.Method(r, "")
 		}
 		
+		//overloaded constructor method
+		//initialise the values and objects
 		public Method(String r, String m) {
 			receiver = r
 			arguments = new ArrayList()
@@ -429,14 +466,17 @@ class Handler{
 			wState = new ArrayList()
 		}
 		
+		//set for schedule flag
 		void setSch() {
 			isSch = true
 		}
 		
+		//set for state flag
 		void setState() {
 			useState = true
 		}
 		
+		//add a new state to the list
 		void addState(String s, boolean isWrite) {
 			if(isWrite) {
 				wState.add(s)
@@ -445,22 +485,27 @@ class Handler{
 			}
 		}
 		
+		//getter for method name
 		String getM() {
 			return method
 		}
 		
+		//getter for receiver name
 		String getRec() {
 			return receiver
 		}
 		
+		//setter for path
 		void setPath(String pth) {
 			callPath = pth
 		}
 		
+		//setter for method name
 		void addMethod(String m) {
 			method = m
 		}
 		
+		//adds a new argument to the list of arguments as an expression
 		void addArg(Expression argexp) {
 			if(argexp instanceof ArgumentListExpression) {
 				argexp.each { xp->
@@ -471,17 +516,15 @@ class Handler{
 			}
 		}
 		
+		//sets the conditional info
+		//updates the condPar variable
 		void setCond() {
-//			println "Method: " + method
 			
 			isCond = true
 			def ind = 3
 			String p = ""
 			while(ind <= callPath.length()) {
-//				println "Method: " + method
-//				println "CAllPath " + callPath
 				p = callPath.substring(ind-3, ind)
-//				println "Pth: " + p
 				if(p.contains("t-")) {
 					condPar += "time-info:"
 					ind+=2
@@ -491,24 +534,17 @@ class Handler{
 					ind+=2
 				}
 				else if(p.contains("e-")) {
-//					sleep(1000)
 					condPar += "evt-info("
 					p = callPath.substring(ind-3)
-//					println "Pevt: " + p
 					def i = (p.indexOf("e-") + 2)
-//					println "i: " + i
 					def evt = ""
 					while(i < p.length() && p.getAt(i)!="|") {
 						evt += p.getAt(i)
-//						println condPar
 						i++
 					}
 					evtVal.add(evt)
 					condPar += evt + "):"
-//					println "Ind: " + ind + " i: " + i
-//					println condPar
 					ind += i
-//					println ind + " " + i
 				}
 				else if(p.contains("i-")) {
 					condPar += "no-else:"
@@ -526,9 +562,9 @@ class Handler{
 					ind++
 				
 			}
-		//	println "Path p: " + callPath + "\nCond Parameters: " + condPar
 		}
 		
+		//equals override for better comparison
 		@Override
 		boolean equals(Object o) {
 			if(o instanceof Method) {
@@ -541,6 +577,7 @@ class Handler{
 				false
 		}
 		
+		//called for an extensive output rather than the normal string output
 		String extString() {
 			def str = this.toString() + "\n"
 			if(isCond)
@@ -569,6 +606,7 @@ class Handler{
 			return str
 		}
 		
+		//stringify the method
 		@Override
 		public String toString() {
 			String st = receiver + "." + method + "("
@@ -579,12 +617,6 @@ class Handler{
 				}
 			}
 			st = st + ")"
-		/*	if(isCond) {
-				st += "[cond-ex]"
-			}
-			if(isSch) {
-				st += "[scheduled]"
-			} */
 			return st
 		}
 		
@@ -592,17 +624,19 @@ class Handler{
 	
 	class State{
 		
-		String state
-		String path
+		String state //state name
+		String path //path of the state
 		
-		String writeVal
-		Expression writeExp
-		boolean isWrite
+		String writeVal //value written to the state
+		Expression writeExp //expression of the write value
+		boolean isWrite //is this a write state
 		
-		String boolVal
-		Expression readExp
-		boolean boolRead
+		String boolVal //boolean value
+		Expression readExp //expression of the read
+		boolean boolRead //is it a boolean read
 		
+		//state constructor method
+		//initialise fields
 		public State(String s, String p) {
 			 state = s
 			 path = p
@@ -616,12 +650,14 @@ class Handler{
 			 readExp = null
 		}
 		
+		//set this state as a write state with exp as the write value
 		void setWrite(Expression exp) {
 			isWrite = true
 			writeVal = exp.getText()
 			writeExp = exp
 		}
 		
+		//set this as a boolean read state
 		void addBoolRead(Expression exp) {
 			boolRead = true
 			readExp = exp
@@ -636,6 +672,7 @@ class Handler{
 				return false
 		}
 		
+		//overloaded equals check
 		boolean equals(Object o, boolean checkPath) {
 			if(checkPath) {
 				return this.state.equals(o.state) && this.path.equals(o.path)

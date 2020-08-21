@@ -1,28 +1,28 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <section name="Workbench">
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog">
-		<item key="selection" value="state"/>
+		<item key="selection" value="State"/>
 		<item key="wrap" value="true"/>
 		<item key="casesensitive" value="false"/>
 		<item key="wholeword" value="false"/>
 		<item key="incremental" value="false"/>
 		<item key="isRegEx" value="false"/>
 		<list key="findhistory">
+			<item value="stateread"/>
+			<item value="statread"/>
 			<item value="state"/>
+			<item value="energy"/>
+			<item value="println"/>
+			<item value="methodcall"/>
+			<item value="methodexp"/>
+			<item value="todo"/>
+			<item value="schedule"/>
+			<item value=" schedule"/>
+			<item value="app"/>
+			<item value="usrIm"/>
+			<item value="stateSch"/>
 			<item value="timacc"/>
 			<item value="timeacc"/>
-			<item value="t-"/>
-			<item value="now"/>
-			<item value="garageDoor"/>
-			<item value="garageDoor7"/>
-			<item value="schedule"/>
-			<item value="0 *"/>
-			<item value="schedule on"/>
-			<item value="scheduled"/>
-			<item value="sch:"/>
-			<item value="H&quot; +"/>
-			<item value="H"/>
-			<item value="schedule meth"/>
 		</list>
 		<list key="replacehistory">
 			<item value="if(DEBUG) println"/>
@@ -30,8 +30,8 @@
 		</list>
 	</section>
 	<section name="org.eclipse.ui.texteditor.FindReplaceDialog_dialogBounds">
-		<item key="DIALOG_X_ORIGIN" value="1113"/>
-		<item key="DIALOG_Y_ORIGIN" value="526"/>
+		<item key="DIALOG_X_ORIGIN" value="717"/>
+		<item key="DIALOG_Y_ORIGIN" value="362"/>
 		<item key="DIALOG_WIDTH" value="336"/>
 		<item key="DIALOG_HEIGHT" value="468"/>
 		<item key="DIALOG_FONT_NAME" value="1|Segoe UI|9.0|0|WINDOWS|1|-15|0|0|0|400|0|0|0|1|0|0|0|0|Segoe UI"/>

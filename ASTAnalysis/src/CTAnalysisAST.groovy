@@ -37,6 +37,9 @@ import org.codehaus.groovy.transform.GroovyASTTransformation
 import org.codehause.groovyx.gpars.*
 
 
+
+//Class that reads the AST and extracts the information the analysis class will need
+//stores the information in Handler objects in a list of handlers
 @GroovyASTTransformation(phase = CompilePhase.SEMANTIC_ANALYSIS)
 class CTAnalysisAST extends CompilationCustomizer{	
 	
@@ -44,7 +47,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 	List devices //a list of device variables set by the inputs
 	List allDecMeths //a list of declared methods in the application
 	MethodVisitor mv //a method visitor object
-	Logger log //a Logger class obect to log the analysis on an external file
 	
 	boolean DEBUG = false //flag to print debug info, i.e. flood the output haha
 	boolean SUMMARY = false //flag for printing handler and method summary
@@ -111,8 +113,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 	//event informations usage, and conditional branching information
 	//from the handler code
 	void getStateVariables(ClassNode cn) {
-		
-		
+				
 		//PATHLOG LEGEND:
 		//c: conditional block
 		//e- event value
@@ -127,8 +128,13 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//sf: scheduled overwrite false
 		//us: unscheduling method
 		//s: Scheduler handler
-		//m: method that the resursion is currently in to prevent recursive infinite loops in analysis
-		def pathLog //a log of the branching information traced to access the current line
+		//m: method that the recursion is currently in to prevent recursive infinite loops in analysis
+		
+		//the path logs a trace of situations outlined above that affects the analysis of the current line of code
+		//as the situations are encountered going down the AST, they are concatenated to the end of the path
+		//when going up the AST, the flags down the AST are removed
+		//one can think of it as a stack-like implementation
+		def pathLog
 		
 		//cycle through all the handlers
 		handlers.each { hdl->
@@ -262,7 +268,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 			
 			//if the boolean check uses state info,
 			//log s- to the flags
-			if(est.getText().contains("state.")) {
+			if(est.getText().toLowerCase().contains("state.")) {
 				mods += "s-"
 			}
 			
@@ -333,13 +339,14 @@ class CTAnalysisAST extends CompilationCustomizer{
 					pth += "m:" + mname + ":"
 					
 					//Check if the method itself uses state and log that info when creating a method object
+					//get the name of the state variable accessed and store it as well
 					def sta = false
 					def stat = ""
 					if(cn.getDeclaredMethods(exp.getMethodAsString()).size()>0) {
 						MethodNode mn = cn.getDeclaredMethods(exp.getMethodAsString()).get(0)
-						if(mn.getCode().getText().contains("state.")) {
+						if(mn.getCode().getText().toLowerCase().contains("state.")) {
 							if(DEBUG) println "meth contain state"
-							String code = mn.getCode().getText()
+							String code = mn.getCode().getText().toLowerCase()
 							def sin = code.lastIndexOf("state.")
 							sin += 6
 							stat = "st:"
@@ -394,13 +401,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 						} else if(exp.getArguments().size()>0 && mtext.contains("unschedule")){
 							schMeth = exp.getArguments().getAt(0).getText()
 						} else {
-						//	println exp
-						//	println hdl.name
 							schMeth = exp.getArguments().getAt(1).getText()
 						}
-						
-						//TODO: incorporate method names into the path 
-						//to guard against infinite recursion stack overflows
 						
 						//find the declared method within the code and get the method node
 						def mn = cn.getDeclaredMethods(schMeth).get(0)
@@ -414,7 +416,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 								schMeth, 
 								new ArgumentListExpression(mn.getParameters())))
 						
-						//check for overwrite scheduling
+						//check for whether it contains overwrite flag and if it set to false or not
 						boolean schOvrWr = true
 						if(exp.getArguments().size() > 2) {
 							MapExpression mep = exp.getArguments().getAt(2)
@@ -430,7 +432,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 						
 						if(DEBUG) println "Path sch: " + pth
 						
-						
+						//Pass the appropriate flag depending on whether the schedule overwrite is true or not
 						if(schOvrWr) {
 							hdl.setSch(schOvrWr)
 							stateRecurse(ext, hdl, cn, pth + "so:")
@@ -470,6 +472,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 							}
 						}
 						
+						//store the variable used within the .each loop as parName
 						def parName = ""
 						if(DEBUG) println "Closure: MCE " + exp
 						ClosureExpression ce = exp.getArguments().getAt(0)
@@ -508,7 +511,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 				//if the left side contains state, then it is an assignment to the state variable
 				//add it as a write to state
-				if(lex.text.contains("state.") && !pth.contains("br:")) {
+				if(lex.text.toLowerCase().contains("state.") && !pth.contains("br:")) {
 					
 					//if the binary op is a checking operation with state on the left side add to read states
 					if(exp.getOperation().getText().contains("==") || exp.getOperation().getText().contains("<")
@@ -525,10 +528,8 @@ class CTAnalysisAST extends CompilationCustomizer{
 					}
 				}
 				
-				
-				
 				//if state is on the right, then it is a read on state
-				if(rex.text.contains("state.")) {
+				if(rex.text.toLowerCase().contains("state.")) {
 					if(exp.getOperation().getText().contains("==") || exp.getOperation().getText().contains("<")
 						|| exp.getOperation().getText().contains(">") || exp.getOperation().getText().contains("!")) {
 						hdl.addReadState(exp.getRightExpression().getText(), pth + "br:", exp.getLeftExpression())
@@ -565,7 +566,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 				}
 			}
 			else if(exp instanceof PropertyExpression) {
-				if(exp.getText().contains("state.") && !pth.contains("bl:")) {
+				if(exp.getText().toLowerCase().contains("state.") && !pth.contains("bl:")) {
 					hdl.addReadState(exp.getText(), pth)
 				}
 			} 
@@ -579,51 +580,11 @@ class CTAnalysisAST extends CompilationCustomizer{
 		public MethodVisitor( ) {
 		}
 		
-		@Override
-		void visitIfElse(IfStatement ifs) {
-			if(DEBUG) println "In Ifelse visitor: " + ifs.toString()
-			if(ifs.getIfBlock() instanceof ExpressionStatement) {
-				Expression exp = ifs.getIfBlock().getExpression()
-				if(exp instanceof MethodCallExpression) {
-					if(DEBUG) println "Methodcall exp: " + exp.getMethodAsString()
-					visitMethodCallExpression(exp)
-				}
-			}else {
-				BlockStatement bs = (BlockStatement) ifs.getIfBlock()
-				bs.getStatements().each { st->
-					if(st instanceof ExpressionStatement) {
-						Expression exp = st.getExpression()
-						if(exp instanceof MethodCallExpression) {
-							visitMethodCallExpression(exp)
-						}
-					}
-				}
-			}
-			if(!ifs.getElseBlock() instanceof EmptyStatement) {
-				if(ifs.getIfBlock() instanceof ExpressionStatement) {
-					Expression exp = ifs.getIfBlock().getExpression()
-					if(exp instanceof MethodCallExpression) {
-						visitMethodCallExpression(exp)
-					}
-				}else {
-					bs = (BlockStatement) ifs.getElseBlock()
-					bs.getStatements().each { st->
-						if(st instanceof ExpressionStatement) {
-							Expression exp = st.getExpression()
-							if(exp instanceof MethodCallExpression) {
-								visitMethodCallExpression(exp)
-							}
-						}
-					}
-				}
-			}
-		}
-		
-		//Visitor for MEthod Call Expressions
-		//
+		//Visitor for Method Call Expressions
 		@Override
 		public void visitMethodCallExpression(MethodCallExpression mce) {
-						
+			
+			//method name		
 			def mceText
 			
 			//Store the name of the method called as a string
@@ -666,6 +627,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 							}							
 						} 
 					}
+					//if it is a device add to devices list
 					if(isDevice)
 						devices.add(new Device(dname, dcap))	
 				}
@@ -674,14 +636,19 @@ class CTAnalysisAST extends CompilationCustomizer{
 			//SUBSCRIPTION HANDLER
 			if(mceText.equals("subscribe") && mce.getArguments().size()>0) {
 				
+				//get arguments as list
 				List arglist = mce.getArguments().toList()
 				
 				if(DEBUG) println "Handler Subs: " + mce.getText()
 				
+				//to be called handler name, subscribed device name, and subscribed event name
 				def hname = ""
 				def dname = ""
 				def ename = ""
+				//if has equal to or more than 3 arguments
 				if(arglist.size() >= 3) {
+					
+					//first argument is the device to subscribe to
 					if(arglist.get(0) instanceof VariableExpression){
 						
 						VariableExpression varex = (VariableExpression) arglist.get(0)
@@ -690,6 +657,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 					
 					}
 					
+					//second argument is the capabilities or even triggers to subscribe to
 					if(arglist.get(1) instanceof ConstantExpression){
 						
 						ConstantExpression conex = (ConstantExpression) arglist.get(1)
@@ -697,6 +665,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 						ename = conex.getValue()
 					}
 					
+					//last is the handler to be called when the event triggers
 					if(arglist.get(2) instanceof VariableExpression){
 						VariableExpression varex = (VariableExpression) arglist.get(2)
 						
@@ -711,10 +680,12 @@ class CTAnalysisAST extends CompilationCustomizer{
 				
 					if(DEBUG) println "Handler & Device: " + hname + " " + dname + " " + ename
 					
+					//add the handler 
 					handlerAdder(new Handler(hname, dname, dname + "." + ename))
 				}
 			}
 			
+			//if it is a schedule method, then create a different kind of handler object
 			if(mceText.equals("schedule")) {
 				if(DEBUG) println "Schedule: " + mce.getArguments()
 				List arglist = mce.getArguments().toList()
@@ -784,6 +755,7 @@ class CTAnalysisAST extends CompilationCustomizer{
 		//Capabilty List
 		List cap
 		
+		//Device constructor method
 		public Device(String n, List c) {
 			devName = n
 			cap = new ArrayList()
@@ -807,8 +779,6 @@ class CTAnalysisAST extends CompilationCustomizer{
 			handlers.get(handlers.indexOf(hdl)).addEvent(hdl.eventTriggers.get(0))
 		}else {
 			handlers.add(hdl)
-		}
-		
+		}	
 	}
-	
 }

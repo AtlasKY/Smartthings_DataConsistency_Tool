@@ -7,6 +7,10 @@ import org.codehaus.groovy.ast.expr.ConstantExpression
 import org.codehaus.groovy.control.CompilePhase
 import org.codehaus.groovy.control.CompilerConfiguration
 
+
+//This class does the state and device modification and user impact consistency analysis
+//of the handler list passed into the instance in the constructor
+//can print out the result of the analysis as a user-friendly readable output to the console
 class ConsistencyAnalysis {
 	
 	List handlers
@@ -57,15 +61,21 @@ class ConsistencyAnalysis {
 		
 		println "Analysis"
 		
+		//cycle over the handlers in the application
 		for(int i = 0; i < handlers.size(); i++) {
 			
+			//compare them against themselves and the other handlers
 			for(int j = i; j < handlers.size(); j++) {
 				
 				if(DEBUG) println "Handlers: " + handlers.get(i).name + " " + handlers.get(j).name
 				
 				//starts by calling the handler crossed with itself
 				AnalysisResult ar = analysisHelper(handlers.get(i), handlers.get(j))
+				
+				//add the result to the results list
 				results.add(ar)
+				
+				//if the result is deemed unsafe, add to the problematic results list
 				if(!ar.isSafe)
 					unsafeResults.add(ar)
 
@@ -73,6 +83,7 @@ class ConsistencyAnalysis {
 		}
 	}
 	
+	//printer method for the results of the analysis
 	void print() {
 		
 		println "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++\n"
@@ -100,17 +111,22 @@ class ConsistencyAnalysis {
 	
 	AnalysisResult analysisHelper(Handler h1, Handler h2) {
 		
+		//Create a result instance
 		AnalysisResult ar = new AnalysisResult(h1, h2)
 		
+		//analyse the state consistency and store in ar
 		ar = stateAnalysis(ar, h1, h2)
 		
+		//analyse the user impact and store in the ar
 		ar = userImpactAnalysis(ar, h1, h2)
 		
 		return ar
 	}
 	
+	
 	AnalysisResult stateAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
 		
+		//initialise state result enums to SAFE
 		StateRes s1 = StateRes.NO_STATE
 		StateRes s2 = StateRes.NO_STATE
 		
@@ -137,8 +153,9 @@ class ConsistencyAnalysis {
 		// if not leave as is
 		if((s1 == StateRes.SAFE_WRITE || s1 == StateRes.SAFE_RW)) {
 			h1.writeStates.each { ws->
-			//	println ws.path + " " + ws
-				ar = stateWriteHelper(ar, h2 ,ws)
+				
+				//stateWriteHelper sets the ar.flag to false if h2 reads the same state field as ws
+				ar = stateReadHelper(ar, h2 ,ws)
 				if(!ar.flag) {
 								
 					//set the state results to unsafe
@@ -152,7 +169,7 @@ class ConsistencyAnalysis {
 					else if(s2 == StateRes.SAFE_RW)
 						s2 = StateRes.UNSAFE_RW
 				}
-				
+				//if h2 writes, check for writing to the same place
 				if(s2 == StateRes.SAFE_WRITE || s2 == StateRes.SAFE_RW) {
 					ar = stateWriteHelper(ar, h2 ,ws)
 					if(!ar.flag) {
@@ -209,8 +226,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
-		//println "S1: " + s1 + " S2: " + s2
-		
+		//set the state results into the analysis results object and return it
 		ar.stateRes(s1, s2)
 		
 		return ar
@@ -397,17 +413,10 @@ class ConsistencyAnalysis {
 		
 	}
 	
-	
-	enum UImpact{
-		SAFE,
-		UNS_NOTIF,
-		UNS_DEVICE_MOD,
-		UNS_DEV_MOD_NOTIF
-	}
-	
+	//analyse notification, device modification and scheduling consistency problems of the application
 	AnalysisResult userImpactAnalysis(AnalysisResult ar, Handler h1, Handler h2) {
 		
-		//if any of the two uses notifications
+		//if any of the two uses notifications, check notification safety
 		if(h1.hasMsg) {
 			ar = notifAnalysis(ar, h1, 1)
 		}
@@ -416,6 +425,9 @@ class ConsistencyAnalysis {
 		}
 		if(DEBUG) println "H1: " + h1.unSch + " sch: " + h1.isSch
 		if(DEBUG) println "H2: " + h2.unSch + " sch: " + h2.isSch
+		
+		//if both of them have scheduled methods and if one has an unscheduling
+		//check for schedule unschedule consistency
 		if(h1.schMeths.size()>0 && h2.schMeths.size()>0) {
 			if(h1.unSch && h2.isSch) {
 				ar = unschHelper(ar, h1, h2, 1)
@@ -519,18 +531,12 @@ class ConsistencyAnalysis {
 		//if unscheduling is a general call and if the other handler schedules anything
 		//then flag as inconsistent
 		if(h1.unSch) {
-			if(DEBUG) println "Unsch"
 			h1.schMeths.each { sm->
 				if(sm.method.contains("unsch")) {
-					if(DEBUG) println "Meth Unsch"
 					if(sm.arguments.size() > 0) {
-						if(DEBUG) println "Arg Size"
 						String ag = sm.arguments.getAt(0).getText()
-						if(DEBUG) println "Arg: " + ag
 						h2.schMeths.each { h2m->
-							if(DEBUG) println "h2 args"
 							h2m.arguments.each { arg->
-								if(DEBUG) println "H2Arg: " + arg.getText()
 								if(arg.getText().equals(ag)) {
 									ar.unSchConflict = true
 									ar.isSafe = false
@@ -552,15 +558,14 @@ class ConsistencyAnalysis {
 		
 	}
 	
-	//Safe if the notifications are scheduled execution
+	//Safe if the notifications are sent with scheduled execution
+	//check the path of the call, if it is scheduled with overwrite then safe
 	AnalysisResult notifAnalysis(AnalysisResult ar, Handler h, int hIndex) {
 		
 		h.calledMethods.each{ m->
 			if(m.method.contains("sendNotif") || m.method.contains("sendSms") 
 				|| m.method.contains("sendPush")) {
-				
-				if(DEBUG) println m.method + " " + m.callPath
-				
+								
 				if(m.callPath.contains("so:")) {
 					ar.setMsgFlags(hIndex, true)
 				}
@@ -571,13 +576,10 @@ class ConsistencyAnalysis {
 				else {
 					ar.setMsgFlags(hIndex, false)
 				}
-				
 			}
 		}
-		
 		return ar
 	}
-
 	
 	//An object to store the result of the analysis
 	//The handlers involved hdl1 and hdl2
@@ -591,10 +593,11 @@ class ConsistencyAnalysis {
 		//to other flag instances consistent within the object
 		boolean flag
 		
+		//Flag to store if the result is consistency safe or not
 		boolean isSafe
 		
 		//Device Modification Safety Flags
-		boolean haveDevMod
+		boolean haveDevMod //does it modify device state
 		List devTimeCond //device modification is under a time dependent conditional block
 		List devEvtCond //device modification is under an event value dependent conditional block
 		List devStatCond //device modification is under a sate value dependent conditional block
@@ -602,15 +605,16 @@ class ConsistencyAnalysis {
 		List varArgMod //device is modified with a variable, event, or state value, i.e. different modifications possible
 		
 		//Notification safety flags
-		boolean h1Msg
-		boolean h1MsgSafe
-		boolean h2Msg
-		boolean h2MsgSafe
-		boolean nOverWrite
+		boolean h1Msg //does handler 1 use notifications/messages
+		boolean h1MsgSafe //is handler 1 safe in its use of notification/messaging
+		boolean h2Msg //does handler 2 use notifications/messages
+		boolean h2MsgSafe //is handler 2 safe in its use of notification/messaging
+		boolean nOverWrite //flag to check if the unsafe notif/messages are because of 
+						   //a false overwrite in the schedule function
 		
 		//Schedule vs Unschedule conflict
-		boolean unSchConflict
-		int unSchH
+		boolean unSchConflict //is there a conflict between schedule and unschedule calls between handlers
+		int unSchH //which handler unschedules the other's scheduled execution
 		
 		//Output flags
 		boolean schFlag //schedule overwrite false flag 
@@ -619,14 +623,12 @@ class ConsistencyAnalysis {
 		boolean timeCondFlag //a time conditional modification of the state field
 		boolean readWriteFlag //a flag for when the methods both read and write to the same state field
 		
-		int stateMod
-		int usrImp
-		int deviceMod
 		
-		String result
-		String stateStr
-		String usrImpStr
+		String result //the output string that will be returned
+		String stateStr //internal logging of the state results
+		String usrImpStr //internal logging of the user impact results
 		
+		//consturctor call to get the handlers and initialise the values
 		public AnalysisResult(Handler h1, Handler h2) {
 			
 			hdl1 = h1
@@ -664,6 +666,8 @@ class ConsistencyAnalysis {
 			isSafe = true
 		}
 		
+		//update notification and message related flags 
+		//sets handler hdlIndex's safe messaging flag to isSch if it is scheduled
 		void setMsgFlags(int hdlIndex, boolean isSch) {
 			
 			if(hdlIndex == 1) {
@@ -679,6 +683,8 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//gets the result of the state consistency analysis and populated the internal string
+		//with user readable output
 		void stateRes(StateRes h1, StateRes h2) {
 			
 			//println "stateRes: " + h1 + " " + h2			
@@ -768,6 +774,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//a helper flag check for the stat string populator method
 		String stateFlagChecks() {
 			String str = ""
 			if(schFlag) {
@@ -788,6 +795,7 @@ class ConsistencyAnalysis {
 			return str
 		}
 		
+		//a helper that returns the read states of a handler as a string
 		String readHelper(Handler h) {
 			String str = ""
 			
@@ -804,6 +812,7 @@ class ConsistencyAnalysis {
 			return str
 		}
 		
+		//a helper that returns the write states of a handler as a string
 		String writeHelper(Handler h) {
 			String str = ""
 			
@@ -821,7 +830,7 @@ class ConsistencyAnalysis {
 			
 		}
 
-		
+		//getter method for device flags/lists---------
 		boolean getDevMultMod() {
 			if(devMultMod.size()>0)
 				return true
@@ -857,10 +866,8 @@ class ConsistencyAnalysis {
 				false
 		}
 		
+		//helper method for internal user impact string
 		void usrImpFlagChecks() {
-			
-//			println "" + h1Msg + " " + h1MsgSafe
-//			println "" + h2Msg + " " + h2MsgSafe
 			
 			if(h1Msg && h2Msg && !h1MsgSafe && !h2MsgSafe) {
 				usrImpStr += "Handler 1 may send duplicate notifications to user. "
@@ -877,17 +884,7 @@ class ConsistencyAnalysis {
 					usrImpStr += "No scheduling for messages."
 				}
 				usrImpStr += "\n"
-			}
-		/*	if(h2Msg && !h2MsgSafe && !h1MsgSafe) {
-				usrImpStr += "Handler 2 may send duplicate notifications to user. "
-				if(nOverWrite) {
-					usrImpStr += "Schedule overwrite is set to FALSE."
-				} else {
-					usrImpStr += "No scheduling for messages."
-				}
-				usrImpStr += "\n"
-			} */
-			
+			}			
 			
 			if(getDevMultMod()) {
 				usrImpStr += "Multiple modification calls made to the same device by\n"
@@ -956,6 +953,7 @@ class ConsistencyAnalysis {
 			
 		}
 		
+		//add to the multiple modification list to print the method for user later on
 		void devMultModAdd(Method m, int hInd) {
 			String str = "H" + hInd + ": " + m.toString()
 			if(!devMultMod.contains(str)) {
@@ -963,6 +961,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//add to the variable argument modification list to print the method for user later on
 		void varArgModAdd(Method m, int hInd) {
 			String str = "H" + hInd + ": " + m.toString()
 			if(!varArgMod.contains(str)) {
@@ -970,6 +969,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//add to the time conditional modification list to print the method for user later on
 		void devTimeCondAdd(Method m, int hInd) {
 			String str = "H" + hInd + ": " + m.toString()
 			if(!devTimeCond.contains(str)) {
@@ -977,6 +977,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//add to the event conditional modification list to print the method for user later on
 		void devEvtCondAdd(Method m, int hInd) {
 			String str = "H" + hInd + ": " + m.toString()
 			if(!devEvtCond.contains(str)) {
@@ -984,6 +985,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//add to the state conditional modification list to print the method for user later on
 		void devStatCondAdd(Method m, int hInd) {
 			String str = "H" + hInd + ": " + m.toString()
 			if(!devStatCond.contains(str)) {
@@ -991,6 +993,7 @@ class ConsistencyAnalysis {
 			}
 		}
 		
+		//return the results as a user readable string
 		@Override
 		String toString() {
 			
@@ -1005,8 +1008,6 @@ class ConsistencyAnalysis {
 			result += stateStr
 			
 			return result
-		}
-		
-	}
-	
+		}	
+	}	
 }
